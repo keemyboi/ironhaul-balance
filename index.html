@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Iron Haul – Balance</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; max-width: 520px; margin: 40px auto; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
+    label { display:block; margin: 8px 0 4px; }
+    input { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; }
+    button { padding:10px 14px; border:0; border-radius:10px; cursor:pointer; }
+    .row { display:flex; gap:10px; align-items:center; }
+    .muted { color:#666; font-size: 0.9rem; }
+    #result { margin-top: 16px; }
+    #balance { font-size: 2rem; margin-top: 8px; }
+    .hidden { display:none; }
+  </style>
+  <!-- PlayFab JavaScript SDK (official CDN) -->
+  <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
+</head>
+<body>
+  <h1>Iron Haul – Balance</h1>
+  <p class="muted">Log in with your PlayFab account to view your IH credits.</p>
+
+  <div class="card" id="loginCard">
+    <label>Email</label>
+    <input id="email" type="email" placeholder="you@example.com" />
+    <label>Password</label>
+    <input id="password" type="password" placeholder="••••••••" />
+    <div class="row" style="margin-top:12px;">
+      <button id="loginBtn">Log in</button>
+      <button id="registerBtn">Register</button>
+    </div>
+    <div id="loginMsg" class="muted" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="card hidden" id="balanceCard">
+    <div class="row" style="justify-content:space-between;">
+      <div>
+        <div class="muted">Logged in as</div>
+        <div id="playerId" style="font-weight:600;"></div>
+      </div>
+      <button id="logoutBtn">Log out</button>
+    </div>
+
+    <div id="result">
+      <div class="muted">IH Balance</div>
+      <div id="balance">—</div>
+      <button id="refreshBtn" style="margin-top:10px;">Refresh</button>
+    </div>
+  </div>
+
+  <script>
+    // --- CONFIG ---
+    const TITLE_ID = "YOUR_TITLE_ID_HERE"; // <- put your PlayFab Title ID
+    const CURRENCY_CODE = "IH";            // <- your virtual currency code
+
+    // Init PlayFab
+    PlayFab.settings.titleId = 1A7FA4;
+
+    const el = id => document.getElementById(id);
+    const loginCard = el('loginCard');
+    const balanceCard = el('balanceCard');
+    const loginMsg = el('loginMsg');
+    const playerIdEl = el('playerId');
+    const balanceEl = el('balance');
+
+    function setUI(loggedIn) {
+      loginCard.classList.toggle('hidden', loggedIn);
+      balanceCard.classList.toggle('hidden', !loggedIn);
+    }
+
+    function showMsg(text) {
+      loginMsg.textContent = text || '';
+    }
+
+    function login(email, password) {
+      showMsg('Logging in...');
+      PlayFabClientSDK.LoginWithEmailAddress({
+        TitleId: TITLE_ID,
+        Email: email,
+        Password: password,
+        InfoRequestParameters: { GetUserAccountInfo: true }
+      }, (res, err) => {
+        if (err) { showMsg("Login failed: " + (err.errorMessage || err.code)); return; }
+        const pid = res.data?.PlayFabId || res.data?.InfoResultPayload?.AccountInfo?.PlayFabId || 'Unknown';
+        playerIdEl.textContent = pid;
+        setUI(true);
+        refreshBalance();
+      });
+    }
+
+    function register(email, password) {
+      showMsg('Creating account...');
+      PlayFabClientSDK.RegisterPlayFabUser({
+        TitleId: TITLE_ID,
+        Email: email,
+        Password: password,
+        RequireBothUsernameAndEmail: false
+      }, (res, err) => {
+        if (err) { showMsg("Register failed: " + (err.errorMessage || err.code)); return; }
+        showMsg('Account created. Logging in…');
+        login(email, password);
+      });
+    }
+
+    function refreshBalance() {
+      balanceEl.textContent = '…';
+      PlayFabClientSDK.GetUserInventory({}, (res, err) => {
+        if (err) { balanceEl.textContent = 'Error'; return; }
+        // VirtualCurrency is an object like { "IH": 1234, "GC": 50, ... }
+        const vc = res.data?.VirtualCurrency || {};
+        balanceEl.textContent = vc[CURRENCY_CODE] ?? 0;
+      });
+    }
+
+    function logout() {
+      // Clear session by resetting stored ticket; simplest approach is full reload
+      PlayFab._internalSettings.sessionTicket = null;
+      setUI(false);
+      showMsg('');
+      balanceEl.textContent = '—';
+      playerIdEl.textContent = '';
+    }
+
+    // Wire UI
+    el('loginBtn').onclick = () => {
+      const email = el('email').value.trim();
+      const pw = el('password').value;
+      if (!email || !pw) { showMsg('Enter email and password.'); return; }
+      login(email, pw);
+    };
+    el('registerBtn').onclick = () => {
+      const email = el('email').value.trim();
+      const pw = el('password').value;
+      if (!email || !pw) { showMsg('Enter email and password.'); return; }
+      register(email, pw);
+    };
+    el('refreshBtn').onclick = refreshBalance;
+    el('logoutBtn').onclick = logout;
+
+    // Optional: auto-login via existing session ticket if you persist it.
+  </script>
+</body>
+</html>

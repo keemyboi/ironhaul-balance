@@ -17,22 +17,22 @@
     .muted{color:var(--muted);font-size:.92rem}
     .hidden{display:none}
     #balance{font-size:2rem;margin-top:8px}
-    /* tiny loader */
     .spinner{width:16px;height:16px;border:2px solid #93c5fd;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .9s linear infinite;margin-right:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
     .status{display:flex;align-items:center;gap:8px;margin-top:8px;min-height:22px}
     .error{color:#fca5a5}
     .ok{color:#86efac}
     .note{margin-top:12px}
+    hr{border:0;border-top:1px solid #111827;margin:16px 0}
   </style>
-  <!-- PlayFab Client JS SDK -->
   <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
 </head>
 <body>
 <div class="wrap">
   <h1>Iron Haul – Balance</h1>
-  <p class="muted">Log in with your PlayFab account to view your <strong>IH</strong> credits.</p>
+  <p class="muted">Log in with your PlayFab account to view and buy <strong>IH</strong> credits.</p>
 
+  <!-- Login card -->
   <div class="card" id="loginCard">
     <label>Email</label>
     <input id="email" type="email" placeholder="you@example.com" />
@@ -43,11 +43,10 @@
       <button id="registerBtn" class="secondary">Register</button>
     </div>
     <div id="loginStatus" class="status muted"></div>
-    <div class="note muted">
-      Trouble logging in? Make sure Email/Password auth is enabled in PlayFab Settings → Authentication.
-    </div>
+    <div class="note muted">Trouble logging in? Make sure Email/Password auth is enabled in PlayFab.</div>
   </div>
 
+  <!-- Balance card -->
   <div class="card hidden" id="balanceCard">
     <div class="row" style="justify-content:space-between;margin-bottom:8px;">
       <div>
@@ -63,13 +62,30 @@
       <button id="refreshBtn">Refresh</button>
       <div id="balanceStatus" class="status muted"></div>
     </div>
+
+    <!-- BUY CREDITS -->
+    <hr>
+    <div class="row" style="justify-content:space-between;">
+      <div>
+        <div class="muted">Buy more credits</div>
+        <div class="muted" style="font-size:.9rem">Checkout opens in a new tab (thirdweb).</div>
+      </div>
+      <div class="row">
+        <button onclick="openCheckout(LINK_500)">Buy 500 IH</button>
+        <button onclick="openCheckout(LINK_200)">Buy package 2</button>
+      </div>
+    </div>
+    <div id="buyStatus" class="status muted"></div>
   </div>
 </div>
 
 <script>
   // ====== CONFIG ======
-  const TITLE_ID = "1A7FA4";  // <- your PlayFab Title ID
-  const CURRENCY_CODE = "IH";  // <- your currency code
+  const TITLE_ID = "1A7FA4";
+  const CURRENCY_CODE = "IH";
+  // Paste your thirdweb "Copy link" URLs:
+  const LINK_500 = "https://checkout.thirdweb.com/PASTE_YOUR_500_IH_LINK";
+  const LINK_200 = "https://checkout.thirdweb.com/PASTE_YOUR_OTHER_LINK";
 
   PlayFab.settings.titleId = TITLE_ID;
 
@@ -83,34 +99,16 @@
   const registerBtn = el('registerBtn');
   const refreshBtn = el('refreshBtn');
   const logoutBtn = el('logoutBtn');
-
-  function setUI(loggedIn){
-    loginCard.classList.toggle('hidden', loggedIn);
-    balanceCard.classList.toggle('hidden', !loggedIn);
-  }
-  function setBusy(b){
-    [loginBtn, registerBtn, refreshBtn, logoutBtn].forEach(x=>x && (x.disabled = !!b));
-  }
-  function showStatus(target, text, type){
-    target.classList.remove('error','ok');
-    if(type) target.classList.add(type);
-    target.innerHTML = text || '';
-  }
-  function spinText(text){ return `<span class="spinner"></span>${text}`; }
-  function verboseError(where, err){
-    const msg = (err && (err.errorMessage || err.error || err.code)) || 'Unknown error';
-    const details = err && err.errorDetails ? ' ' + JSON.stringify(err.errorDetails) : '';
-    console.error(`[${where}]`, err);
-    return `${where} failed: ${msg}${details}`;
-  }
+  function setUI(loggedIn){ loginCard.classList.toggle('hidden', loggedIn); balanceCard.classList.toggle('hidden', !loggedIn); }
+  function setBusy(b){ [loginBtn, registerBtn, refreshBtn, logoutBtn].forEach(x=>x && (x.disabled = !!b)); }
+  function showStatus(target, text, type){ target.classList.remove('error','ok'); if(type) target.classList.add(type); target.innerHTML = text || ''; }
+  function spin(text){ return `<span class="spinner"></span>${text}`; }
+  function verboseError(where, err){ const msg = (err && (err.errorMessage || err.error || err.code)) || 'Unknown error'; const details = err && err.errorDetails ? ' ' + JSON.stringify(err.errorDetails) : ''; console.error(`[${where}]`, err); return `${where} failed: ${msg}${details}`; }
 
   // ====== Actions ======
   function login(email, password){
-    if(!email || !password){
-      showStatus(status, 'Please enter email and password.', 'error'); return;
-    }
-    setBusy(true);
-    showStatus(status, spinText('Logging in…'));
+    if(!email || !password){ showStatus(status, 'Please enter email and password.', 'error'); return; }
+    setBusy(true); showStatus(status, spin('Logging in…'));
     PlayFabClientSDK.LoginWithEmailAddress({
       TitleId: TITLE_ID, Email: email, Password: password,
       InfoRequestParameters: { GetUserAccountInfo: true }
@@ -119,58 +117,50 @@
       if(err){ showStatus(status, verboseError('Login', err), 'error'); return; }
       const pid = res.data?.PlayFabId || res.data?.InfoResultPayload?.AccountInfo?.PlayFabId || 'Unknown';
       el('playerId').textContent = pid;
-      showStatus(status, 'Login successful.', 'ok');
-      setUI(true);
-      refreshBalance();
+      showStatus(status, 'Login successful.', 'ok'); setUI(true); refreshBalance();
     });
   }
-
   function register(email, password){
-    if(!email || !password){
-      showStatus(status, 'Please enter email and password.', 'error'); return;
-    }
-    setBusy(true);
-    showStatus(status, spinText('Creating account…'));
-    PlayFabClientSDK.RegisterPlayFabUser({
-      TitleId: TITLE_ID, Email: email, Password: password, RequireBothUsernameAndEmail: false
-    }, (res, err) => {
-      setBusy(false);
-      if(err){ showStatus(status, verboseError('Register', err), 'error'); return; }
-      showStatus(status, 'Account created. Logging in…');
-      login(email, password);
-    });
+    if(!email || !password){ showStatus(status, 'Please enter email and password.', 'error'); return; }
+    setBusy(true); showStatus(status, spin('Creating account…'));
+    PlayFabClientSDK.RegisterPlayFabUser({ TitleId: TITLE_ID, Email: email, Password: password, RequireBothUsernameAndEmail: false },
+      (res, err) => { setBusy(false);
+        if(err){ showStatus(status, verboseError('Register', err), 'error'); return; }
+        showStatus(status, 'Account created. Logging in…'); login(email, password);
+      });
   }
-
   function refreshBalance(){
-    setBusy(true);
-    showStatus(balanceStatus, spinText('Fetching balance…'));
-    el('balance').textContent = '…';
+    setBusy(true); showStatus(balanceStatus, spin('Fetching balance…')); el('balance').textContent = '…';
     PlayFabClientSDK.GetUserInventory({}, (res, err) => {
       setBusy(false);
       if(err){ showStatus(balanceStatus, verboseError('GetUserInventory', err), 'error'); return; }
-      const vc = res.data?.VirtualCurrency || {};
-      el('balance').textContent = vc[CURRENCY_CODE] ?? 0;
-      showStatus(balanceStatus, 'Up to date.', 'ok');
+      const vc = res.data?.VirtualCurrency || {}; el('balance').textContent = vc[CURRENCY_CODE] ?? 0; showStatus(balanceStatus, 'Up to date.', 'ok');
     });
   }
-
   function logout(){
-    setBusy(true);
-    showStatus(balanceStatus, spinText('Signing out…'));
+    setBusy(true); showStatus(balanceStatus, spin('Signing out…'));
     try { PlayFab._internalSettings.sessionTicket = null; } catch(e){}
-    setUI(false);
-    el('playerId').textContent = '';
-    el('balance').textContent = '—';
-    showStatus(balanceStatus, '');
-    showStatus(status, 'Signed out.', 'ok');
-    setBusy(false);
+    setUI(false); el('playerId').textContent = ''; el('balance').textContent = '—'; showStatus(balanceStatus, ''); showStatus(status, 'Signed out.', 'ok'); setBusy(false);
+  }
+
+  // thirdweb checkout
+  function getPlayFabId(){
+    return new Promise((resolve)=> { PlayFabClientSDK.GetAccountInfo({}, (r,e)=> resolve(r?.data?.AccountInfo?.PlayFabId || null)); });
+  }
+  async function openCheckout(baseUrl){
+    const s = el('buyStatus'); s.innerHTML = spin('Preparing checkout…');
+    const pid = await getPlayFabId();
+    if(!pid){ s.innerHTML = 'Please log in first (use the form above).'; s.classList.add('error'); return; }
+    const url = `${baseUrl}?metadata[playerId]=${encodeURIComponent(pid)}`;
+    window.open(url, "_blank");
+    s.innerHTML = 'Checkout opened. After paying, click <strong>Refresh</strong> to update your balance.'; s.classList.remove('error'); s.classList.add('ok');
   }
 
   // ====== Wire UI ======
-  loginBtn.onclick = () => login(el('email').value.trim(), el('password').value);
-  registerBtn.onclick = () => register(el('email').value.trim(), el('password').value);
-  refreshBtn.onclick = refreshBalance;
-  logoutBtn.onclick = logout;
+  el('loginBtn').onclick = () => login(el('email').value.trim(), el('password').value);
+  el('registerBtn').onclick = () => register(el('email').value.trim(), el('password').value);
+  el('refreshBtn').onclick = refreshBalance;
+  el('logoutBtn').onclick = logout;
 </script>
 </body>
 </html>

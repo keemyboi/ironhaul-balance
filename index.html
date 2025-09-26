@@ -3,89 +3,191 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Iron Haul – Balance</title>
+  <title>IRON HAUL — Credits</title>
+
   <style>
-    :root { --card:#1f2937; --text:#e5e7eb; --muted:#9ca3af; --accent:#60a5fa; }
-    html,body{background:#0b0f16;color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}
-    .wrap{max-width:520px;margin:40px auto;padding:0 12px}
-    .card{background:var(--card);border-radius:14px;padding:18px;border:1px solid #111827}
+    :root{
+      --bg:#0a0d12;        /* base bay metal */
+      --panel:#121826;     /* dark steel */
+      --panel-2:#1a2435;   /* brushed steel */
+      --line:#1f2a3d;      /* seams */
+      --text:#e8edf6;      /* led-white */
+      --muted:#98a3b4;     /* dusty chrome */
+      --accent:#67e8f9;    /* cyan tube */
+      --accent-2:#60a5fa;  /* cool blue */
+      --warn:#f9a8d4;      /* magenta glow */
+      --ok:#86efac;        /* status green */
+      --err:#fca5a5;       /* alarm red */
+    }
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--text);background:radial-gradient(1200px 600px at 10% -20%, #101826, transparent 50%),
+                                      radial-gradient(800px 500px at 120% -10%, #0c1220, transparent 40%),
+                                      var(--bg);
+      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      letter-spacing:.2px;
+    }
+
+    /* HUD grid */
+    .grid{
+      position:fixed; inset:0; pointer-events:none; opacity:.17;
+      background:
+       linear-gradient(to right, rgba(255,255,255,.05) 1px, transparent 1px) 0 0/36px 36px,
+       linear-gradient(to bottom, rgba(255,255,255,.05) 1px, transparent 1px) 0 0/36px 36px;
+      mask: linear-gradient(to bottom, transparent, black 12%, black 88%, transparent);
+    }
+
+    /* Top hero */
+    .hero{
+      position:relative; overflow:hidden; padding:42px 0 24px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,24,40,.75), rgba(16,24,40,0));
+    }
+    .hero-inner{max-width:980px;margin:0 auto;padding:0 16px;display:flex;gap:18px;align-items:center}
+    .blade{
+      width:60px;height:60px;border-radius:12px;
+      background: conic-gradient(from 220deg, #0d1525, #132034, #0d1525);
+      border:1px solid #1b2740; position:relative; box-shadow: inset 0 0 22px #0b1220, 0 0 24px rgba(103,232,249,.07);
+    }
+    .blade:before{
+      content:""; position:absolute; inset:10px; border-radius:8px;
+      border:1px solid #223252;
+      background: radial-gradient(60% 60% at 30% 30%, rgba(103,232,249,.25), transparent 60%);
+      box-shadow: inset 0 0 36px rgba(103,232,249,.12);
+    }
+    .title{
+      font-weight:800; font-size:clamp(24px, 4vw, 36px); letter-spacing:1.5px;
+      text-transform:uppercase; display:flex; align-items:baseline; gap:12px;
+    }
+    .subtitle{color:var(--muted)}
+    .tag{
+      padding:4px 10px; border:1px solid #2a3a57; border-radius:999px;
+      background:linear-gradient(180deg,#0e1626,#0a111d);
+      color:#b9d7ff; font-size:.78rem; letter-spacing:.5px;
+      box-shadow: inset 0 0 18px rgba(96,165,250,.12), 0 0 22px rgba(103,232,249,.06);
+    }
+
+    .wrap{max-width:980px;margin:24px auto;padding:0 16px}
+    .cards{display:grid;grid-template-columns:1fr;gap:18px}
+    .card{
+      background:linear-gradient(180deg, var(--panel), var(--panel-2));
+      border:1px solid var(--line); border-radius:14px; padding:18px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.02);
+    }
+
     label{display:block;margin:8px 0 6px}
-    input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid #374151;background:#0f1623;color:var(--text)}
-    button{padding:10px 14px;border:0;border-radius:10px;background:var(--accent);color:#081018;cursor:pointer;font-weight:600}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .muted{color:var(--muted);font-size:.92rem}
+    input{
+      width:100%;padding:12px;border-radius:10px;
+      border:1px solid #2a364b;background:#0d1524;color:var(--text);
+      outline:0; box-shadow: inset 0 0 12px rgba(0,0,0,.35);
+    }
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .muted{color:var(--muted)}
     .hidden{display:none}
-    #balance{font-size:2rem;margin-top:8px}
-    .spinner{width:16px;height:16px;border:2px solid #93c5fd;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .9s linear infinite;margin-right:8px}
+    .btn{
+      padding:10px 14px;border:1px solid #2a3a57;border-radius:10px;cursor:pointer;
+      color:#03121a;background: linear-gradient(180deg,#67e8f9,#60a5fa);
+      font-weight:700; letter-spacing:.3px; text-shadow: 0 1px 0 rgba(255,255,255,.25);
+      box-shadow: 0 6px 18px rgba(103,232,249,.15), inset 0 0 18px rgba(255,255,255,.15);
+    }
+    .btn.secondary{
+      color:#bfe1ff;background: linear-gradient(180deg,#0f1a2a,#0a111d);
+      border-color:#2a3a57; text-shadow:none;
+    }
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    #balance{font-size:2rem;margin-top:6px}
+
+    .status{min-height:22px;margin-top:8px}
+    .ok{color:var(--ok)} .error{color:var(--err)}
+
+    /* tiny spinner */
+    .spinner{width:16px;height:16px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .9s linear infinite;margin-right:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .status{display:flex;align-items:center;gap:8px;margin-top:8px;min-height:22px}
-    .error{color:#fca5a5}
-    .ok{color:#86efac}
-    .note{margin-top:12px}
-    hr{border:0;border-top:1px solid #111827;margin:16px 0}
+
+    footer{opacity:.6;text-align:center;margin:24px 0;color:#9fb0c8}
   </style>
+
+  <!-- PlayFab Client JS SDK -->
   <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <h1>Iron Haul – Balance</h1>
-  <p class="muted">Log in with your PlayFab account to view and buy <strong>IH</strong> credits.</p>
+  <div class="grid"></div>
 
-  <!-- Login card -->
-  <div class="card" id="loginCard">
-    <label>Email</label>
-    <input id="email" type="email" placeholder="you@example.com" />
-    <label>Password</label>
-    <input id="password" type="password" placeholder="••••••••" />
-    <div class="row" style="margin-top:12px;">
-      <button id="loginBtn">Log in</button>
-      <button id="registerBtn" class="secondary">Register</button>
-    </div>
-    <div id="loginStatus" class="status muted"></div>
-    <div class="note muted">Trouble logging in? Make sure Email/Password auth is enabled in PlayFab.</div>
-  </div>
-
-  <!-- Balance card -->
-  <div class="card hidden" id="balanceCard">
-    <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="blade" aria-hidden="true"></div>
       <div>
-        <div class="muted">Logged in as</div>
-        <div id="playerId" style="font-weight:700"></div>
+        <div class="title">
+          IRON HAUL
+          <span class="tag">CREDITS CONSOLE</span>
+        </div>
+        <div class="subtitle">Authenticate • Check balance • Buy IH with crypto / card</div>
       </div>
-      <button id="logoutBtn">Log out</button>
     </div>
+  </section>
 
-    <div class="muted">IH Balance</div>
-    <div id="balance">—</div>
-    <div class="row" style="margin-top:10px;">
-      <button id="refreshBtn">Refresh</button>
-      <div id="balanceStatus" class="status muted"></div>
-    </div>
+  <main class="wrap">
+    <div class="cards">
 
-    <!-- BUY CREDITS -->
-    <hr>
-    <div class="row" style="justify-content:space-between;">
-      <div>
-        <div class="muted">Buy more credits</div>
-        <div class="muted" style="font-size:.9rem">Checkout opens in a new tab (thirdweb).</div>
+      <!-- Login -->
+      <div class="card" id="loginCard">
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Sign in</strong>
+          <span class="muted" style="font-size:.9rem">Title: <code>1A7FA4</code></span>
+        </div>
+        <label>Email</label>
+        <input id="email" type="email" placeholder="you@example.com" />
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••••" />
+        <div class="row" style="margin-top:12px;">
+          <button id="loginBtn" class="btn">Log in</button>
+          <button id="registerBtn" class="btn secondary">Register</button>
+        </div>
+        <div id="loginStatus" class="status muted"></div>
       </div>
-      <div class="row">
-        <button onclick="openCheckout(LINK_500)">Buy 500 IH</button>
-        <button onclick="openCheckout(LINK_200)">Buy package 2</button>
+
+      <!-- Balance + Buy -->
+      <div class="card hidden" id="balanceCard">
+        <div class="row" style="justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div class="muted">Logged in as</div>
+            <div id="playerId" style="font-weight:800;letter-spacing:.4px"></div>
+          </div>
+          <button id="logoutBtn" class="btn secondary">Log out</button>
+        </div>
+
+        <div class="muted">IH Balance</div>
+        <div id="balance">—</div>
+        <div class="row" style="margin-top:10px;">
+          <button id="refreshBtn" class="btn">Refresh</button>
+          <div id="balanceStatus" class="status muted"></div>
+        </div>
+
+        <hr>
+
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div class="muted">Buy more credits</div>
+            <div class="muted" style="font-size:.9rem">Opens thirdweb checkout in a new tab</div>
+          </div>
+          <div class="row">
+            <button class="btn" onclick="openCheckout(LINK_500)">Buy 500 IH</button>
+          </div>
+        </div>
+        <div id="buyStatus" class="status muted"></div>
       </div>
+
     </div>
-    <div id="buyStatus" class="status muted"></div>
-  </div>
-</div>
+    <footer>© Iron Haul — forged for players</footer>
+  </main>
 
 <script>
   // ====== CONFIG ======
   const TITLE_ID = "1A7FA4";
   const CURRENCY_CODE = "IH";
-  // Paste your thirdweb "Copy link" URLs:
+
+  // Your thirdweb Payment link (exact URL you sent)
   const LINK_500 = "https://thirdweb.com/pay/540a5b5b-c1e6-4142-8ca0-4c30cee46969";
-  const LINK_200 = "https://thirdweb.com/pay/34cd556a-4eca-4d4e-af1d-1d72c0433613";
 
   PlayFab.settings.titleId = TITLE_ID;
 
@@ -93,74 +195,93 @@
   const el = id => document.getElementById(id);
   const loginCard = el('loginCard');
   const balanceCard = el('balanceCard');
-  const status = el('loginStatus');
+  const loginStatus = el('loginStatus');
   const balanceStatus = el('balanceStatus');
-  const loginBtn = el('loginBtn');
-  const registerBtn = el('registerBtn');
-  const refreshBtn = el('refreshBtn');
-  const logoutBtn = el('logoutBtn');
-  function setUI(loggedIn){ loginCard.classList.toggle('hidden', loggedIn); balanceCard.classList.toggle('hidden', !loggedIn); }
-  function setBusy(b){ [loginBtn, registerBtn, refreshBtn, logoutBtn].forEach(x=>x && (x.disabled = !!b)); }
-  function showStatus(target, text, type){ target.classList.remove('error','ok'); if(type) target.classList.add(type); target.innerHTML = text || ''; }
-  function spin(text){ return `<span class="spinner"></span>${text}`; }
-  function verboseError(where, err){ const msg = (err && (err.errorMessage || err.error || err.code)) || 'Unknown error'; const details = err && err.errorDetails ? ' ' + JSON.stringify(err.errorDetails) : ''; console.error(`[${where}]`, err); return `${where} failed: ${msg}${details}`; }
 
-  // ====== Actions ======
+  function setUI(loggedIn){ loginCard.classList.toggle('hidden', loggedIn); balanceCard.classList.toggle('hidden', !loggedIn); }
+  function setBusy(b){ ['loginBtn','registerBtn','refreshBtn','logoutBtn'].forEach(i=>{ const x=el(i); if(x) x.disabled=!!b; }); }
+  function showStatus(target, text, type){
+    target.classList.remove('ok','error'); if(type) target.classList.add(type);
+    target.innerHTML = text || '';
+  }
+  const spin = t => `<span class="spinner"></span>${t}`;
+  const pfError = (where, err) => {
+    const msg = (err && (err.errorMessage || err.error || err.code)) || 'Unknown error';
+    const details = err && err.errorDetails ? ' ' + JSON.stringify(err.errorDetails) : '';
+    return `${where} failed: ${msg}${details}`;
+  };
+
+  // ====== Auth & Balance ======
   function login(email, password){
-    if(!email || !password){ showStatus(status, 'Please enter email and password.', 'error'); return; }
-    setBusy(true); showStatus(status, spin('Logging in…'));
+    if(!email || !password){ showStatus(loginStatus,'Enter email & password','error'); return; }
+    setBusy(true); showStatus(loginStatus, spin('Logging in…'));
     PlayFabClientSDK.LoginWithEmailAddress({
       TitleId: TITLE_ID, Email: email, Password: password,
       InfoRequestParameters: { GetUserAccountInfo: true }
     }, (res, err) => {
       setBusy(false);
-      if(err){ showStatus(status, verboseError('Login', err), 'error'); return; }
+      if(err){ showStatus(loginStatus, pfError('Login', err), 'error'); return; }
       const pid = res.data?.PlayFabId || res.data?.InfoResultPayload?.AccountInfo?.PlayFabId || 'Unknown';
       el('playerId').textContent = pid;
-      showStatus(status, 'Login successful.', 'ok'); setUI(true); refreshBalance();
+      showStatus(loginStatus, 'Login successful','ok'); setUI(true); refreshBalance();
     });
   }
+
   function register(email, password){
-    if(!email || !password){ showStatus(status, 'Please enter email and password.', 'error'); return; }
-    setBusy(true); showStatus(status, spin('Creating account…'));
-    PlayFabClientSDK.RegisterPlayFabUser({ TitleId: TITLE_ID, Email: email, Password: password, RequireBothUsernameAndEmail: false },
-      (res, err) => { setBusy(false);
-        if(err){ showStatus(status, verboseError('Register', err), 'error'); return; }
-        showStatus(status, 'Account created. Logging in…'); login(email, password);
-      });
+    if(!email || !password){ showStatus(loginStatus,'Enter email & password','error'); return; }
+    setBusy(true); showStatus(loginStatus, spin('Creating account…'));
+    PlayFabClientSDK.RegisterPlayFabUser({
+      TitleId: TITLE_ID, Email: email, Password: password, RequireBothUsernameAndEmail:false
+    }, (res, err) => {
+      setBusy(false);
+      if(err){ showStatus(loginStatus, pfError('Register', err), 'error'); return; }
+      showStatus(loginStatus, 'Account created — signing in…'); login(email,password);
+    });
   }
+
   function refreshBalance(){
-    setBusy(true); showStatus(balanceStatus, spin('Fetching balance…')); el('balance').textContent = '…';
+    setBusy(true); showStatus(balanceStatus, spin('Fetching balance…')); el('balance').textContent='…';
     PlayFabClientSDK.GetUserInventory({}, (res, err) => {
       setBusy(false);
-      if(err){ showStatus(balanceStatus, verboseError('GetUserInventory', err), 'error'); return; }
-      const vc = res.data?.VirtualCurrency || {}; el('balance').textContent = vc[CURRENCY_CODE] ?? 0; showStatus(balanceStatus, 'Up to date.', 'ok');
+      if(err){ showStatus(balanceStatus, pfError('GetUserInventory', err),'error'); return; }
+      const vc = res.data?.VirtualCurrency || {};
+      el('balance').textContent = vc[CURRENCY_CODE] ?? 0;
+      showStatus(balanceStatus,'Up to date','ok');
     });
   }
+
   function logout(){
     setBusy(true); showStatus(balanceStatus, spin('Signing out…'));
     try { PlayFab._internalSettings.sessionTicket = null; } catch(e){}
-    setUI(false); el('playerId').textContent = ''; el('balance').textContent = '—'; showStatus(balanceStatus, ''); showStatus(status, 'Signed out.', 'ok'); setBusy(false);
+    setUI(false); el('playerId').textContent=''; el('balance').textContent='—';
+    showStatus(loginStatus,'Signed out','ok'); showStatus(balanceStatus,''); setBusy(false);
   }
 
-  // thirdweb checkout
-  function getPlayFabId(){
-    return new Promise((resolve)=> { PlayFabClientSDK.GetAccountInfo({}, (r,e)=> resolve(r?.data?.AccountInfo?.PlayFabId || null)); });
+  // ====== Payments ======
+  async function getPlayFabId(){
+    return new Promise((resolve)=> {
+      PlayFabClientSDK.GetAccountInfo({}, (r,e)=> resolve(r?.data?.AccountInfo?.PlayFabId || null));
+    });
   }
+
   async function openCheckout(baseUrl){
-    const s = el('buyStatus'); s.innerHTML = spin('Preparing checkout…');
+    const out = el('buyStatus');
+    out.innerHTML = spin('Preparing checkout…');
     const pid = await getPlayFabId();
-    if(!pid){ s.innerHTML = 'Please log in first (use the form above).'; s.classList.add('error'); return; }
-    const url = `${baseUrl}?metadata[playerId]=${encodeURIComponent(pid)}`;
+    if(!pid){ out.innerHTML = 'Please log in first.'; out.classList.add('error'); return; }
+
+    // include both metadata syntaxes so v2 webhook captures it
+    const url = `${baseUrl}?metadata[playerId]=${encodeURIComponent(pid)}&purchaseData[metadata][playerId]=${encodeURIComponent(pid)}`;
     window.open(url, "_blank");
-    s.innerHTML = 'Checkout opened. After paying, click <strong>Refresh</strong> to update your balance.'; s.classList.remove('error'); s.classList.add('ok');
+    out.innerHTML = 'Checkout opened. After paying, click <strong>Refresh</strong> to update your balance.';
+    out.classList.remove('error'); out.classList.add('ok');
   }
 
   // ====== Wire UI ======
-  el('loginBtn').onclick = () => login(el('email').value.trim(), el('password').value);
-  el('registerBtn').onclick = () => register(el('email').value.trim(), el('password').value);
+  el('loginBtn').onclick   = () => login(el('email').value.trim(), el('password').value);
+  el('registerBtn').onclick= () => register(el('email').value.trim(), el('password').value);
   el('refreshBtn').onclick = refreshBalance;
-  el('logoutBtn').onclick = logout;
+  el('logoutBtn').onclick  = logout;
 </script>
 </body>
 </html>

@@ -3,157 +3,224 @@
 <head>
   <meta charset="utf-8" />
   <title>IRON HAUL — Credits Console</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { color-scheme: dark; }
-    body{margin:0;background:#0a0f14;color:#d7e2ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{max-width:920px;margin:48px auto;padding:0 20px}
-    .panel{background:#101824;border:1px solid #1b2736;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);padding:22px}
-    .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .title{letter-spacing:.08em;font-weight:800}
-    .badge{font:12px/1.8 system-ui;background:#0f1b2a;border:1px solid #213247;border-radius:999px;padding:2px 10px;color:#a9c4e0}
-    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-    button, .btn{background:#2b8cff;border:0;color:#fff;font-weight:800;letter-spacing:.02em;padding:12px 16px;border-radius:12px;cursor:pointer}
-    button[disabled]{opacity:.5;cursor:not-allowed}
-    .muted{opacity:.75}
-    .value{font-size:46px;font-weight:900;margin:10px 0 6px}
-    .card{background:#0f1621;border:1px dashed #203045;border-radius:14px;padding:16px;margin-top:16px}
-    a.btn {text-decoration:none;display:inline-block}
-    .grid{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    :root {
+      --bg:#0b0e13; --card:#121826; --muted:#a8b3cf; --txt:#e7eefc; --brand:#3b82f6; --ok:#10b981; --warn:#f59e0b; --err:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:880px;background:var(--card);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:24px 28px}
+    h1{margin:0 0 6px;font-size:20px;letter-spacing:.3px}
+    .row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+    .sp{height:1px;background:rgba(255,255,255,.06);margin:18px 0}
+    code{background:#0f1422;padding:2px 6px;border-radius:6px}
+    .muted{color:var(--muted)}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:#0f1422}
+    .btn{appearance:none;border:0;background:var(--brand);color:white;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .btn.alt{background:#233048}
+    .btn.bad{background:var(--err)}
+    label{display:block;font-size:12px;color:var(--muted);margin:6px 2px}
+    input{width:100%;background:#0f1422;border:1px solid #1b2437;color:var(--txt);border-radius:8px;padding:10px 12px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+    .stat{font-size:14px}
+    .stat strong{font-size:24px}
+    .status.ok{color:var(--ok)}
+    .status.err{color:var(--err)}
+    .status.warn{color:var(--warn)}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="panel">
-      <div class="hdr">
-        <div class="title">IRON HAUL — Credits Console</div>
-        <span class="badge" id="who">logged out</span>
+<div class="wrap">
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <h1>IRON HAUL — Credits Console</h1>
+        <div class="muted">Authenticate • Check balance • Buy IH with crypto / card</div>
+      </div>
+      <div class="pill muted"><span id="loginState">logged out</span></div>
+    </div>
+
+    <div class="sp"></div>
+
+    <div class="grid">
+      <div>
+        <div class="stat muted">IH Balance</div>
+        <div class="stat"><strong id="bal">—</strong></div>
+
+        <div class="row" style="margin-top:12px">
+          <button class="btn alt" id="refreshBtn">Refresh</button>
+          <button class="btn" id="buy500Btn">Buy 500 IH</button>
+          <button class="btn bad" id="logoutBtn">Log out</button>
+        </div>
+
+        <p class="muted" style="margin-top:10px">
+          After paying, click <b>Refresh</b> to update your balance. The checkout includes your
+          <code>playerId</code> in <code>metadata</code> so the webhook can credit automatically.
+        </p>
       </div>
 
-      <div class="grid">
-        <div>
-          <div class="muted">IH Balance</div>
-          <div class="value" id="bal">—</div>
-          <div class="muted mono" id="status">Ready</div>
+      <div>
+        <label>Email</label>
+        <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        <label>Password</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="loginBtn">Log in</button>
         </div>
-        <div class="row">
-          <button id="refreshBtn">Refresh</button>
-          <a class="btn" href="./buy-500.html" id="buyBtn">Buy 500 IH</a>
-          <button id="loginBtn" style="background:#374a60">Log in</button>
-          <button id="logoutBtn" style="background:#5a2d2d">Log out</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="muted">
-          After paying, click <b>Refresh</b> to update your balance.
-          Purchases open Thirdweb checkout in a new tab and include your
-          <span class="mono">playerId</span> in metadata automatically.
-        </div>
+        <p class="muted" style="margin-top:10px">
+          Only existing accounts can log in here (no account creation on web).
+        </p>
       </div>
     </div>
+
+    <div class="sp"></div>
+
+    <div class="muted" id="status">Ready.</div>
   </div>
+</div>
 
-  <script>
-    // ================== CONFIG ===================
-    const TITLE_ID = "1A7FA4"; // e.g. 1A7FA4
-    PlayFab.settings.titleId = TITLE_ID;
-    // =============================================
+<script>
+  /*********** CONFIG ***********/
+  const TITLE_ID = "1A7FA4";                           // <-- your PlayFab Title ID
+  const CURRENCY_CODE = "IH";
+  const PAYMENT_LINKS = [
+    "https://thirdweb.com/pay/38a4a150-e9b7-4380-a820-1f0dee3a0deb",
+    "https://thirdweb.com/pay/540a5b5b-c1e6-4142-8ca0-4c30cee46969",
+  ];
 
-    const elWho = document.getElementById("who");
-    const elBal = document.getElementById("bal");
-    const elStatus = document.getElementById("status");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const refreshBtn = document.getElementById("refreshBtn");
+  /*********** LOCAL HELPERS ***********/
+  function getLocal(k, d=""){ try { return localStorage.getItem(k) ?? d; } catch { return d; } }
+  function setLocal(k, v){ try { localStorage.setItem(k, v); } catch {} }
+  function delLocal(k){ try { localStorage.removeItem(k); } catch {} }
+  function setText(id, s){ const el=document.getElementById(id); if (el) el.textContent = s; }
+  function setStatus(s, kind=""){ const el = document.getElementById("status"); el.textContent=s; el.className="muted status "+kind; }
 
-    function setStatus(s){ elStatus.textContent = s; }
-    function setWho(id){ elWho.textContent = id ? ("PlayFabId " + id) : "logged out"; }
+  function pickLink() {
+    // keep the user on the same link (so your webhook mapping is consistent)
+    const i = Number(getLocal("ih_link_idx","0"));
+    setLocal("ih_link_idx", String((i+1) % PAYMENT_LINKS.length));
+    return PAYMENT_LINKS[i % PAYMENT_LINKS.length];
+  }
 
-    function getStoredId(){
-      return localStorage.getItem("ih_playfab_id") || null;
+  /*********** SESSION ***********/
+  let sessionTicket = getLocal("ih_session") || "";
+  let playFabId     = getLocal("ih_playfab_id") || "";
+
+  function reflectLoginState() {
+    setText("loginState", playFabId ? `logged in as ${playFabId}` : "logged out");
+  }
+
+  async function loginEmail() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+      setStatus("Enter email and password.", "warn");
+      return;
     }
-    function setStoredId(id){
-      if (id) localStorage.setItem("ih_playfab_id", id);
-      else localStorage.removeItem("ih_playfab_id");
-      setWho(id);
-      window.currentPlayFabId = id || undefined;
-    }
 
-    // Simple demo login using CustomID. Replace with your real auth.
-    function makeCustomId(){
-      const key="ih_custom_id"; let v=localStorage.getItem(key);
-      if(!v){ v="guest_"+crypto.randomUUID(); localStorage.setItem(key,v); }
-      return v;
-    }
+    const btn = document.getElementById("loginBtn");
+    btn.disabled = true;
+    setStatus("Logging in…");
 
-    async function login(){
-      setStatus("Logging in…");
-      loginBtn.disabled=true;
-      try{
-        const body = {
-          TitleId: TITLE_ID,
-          CustomId: makeCustomId(),
-          CreateAccount: true
-        };
-        const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/LoginWithCustomID`, {
-          method:"POST", headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify(body)
-        }).then(r=>r.json());
-        const id = res?.data?.PlayFabId;
-        if(!id) throw res;
-        setStoredId(id);
-        setStatus("Logged in.");
+    try {
+      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/LoginWithEmailAddress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ TitleId: TITLE_ID, Email: email, Password: password })
+      });
+      const data = await res.json();
+      console.log("[IH] LoginWithEmailAddress:", data);
+
+      if (res.ok && data?.code === 200) {
+        sessionTicket = data.data.SessionTicket;
+        playFabId     = data.data.PlayFabId || data?.data?.InfoResultPayload?.AccountInfo?.PlayFabId || "";
+        if (!playFabId) throw new Error("No PlayFabId in response");
+
+        setLocal("ih_session", sessionTicket);
+        setLocal("ih_playfab_id", playFabId);
+
+        reflectLoginState();
+        setStatus("Logged in.", "ok");
         await refreshBalance();
-      }catch(e){
-        console.error(e);
-        setStatus("Login failed (see console).");
-      }finally{
-        loginBtn.disabled=false;
+      } else {
+        const msg = data?.errorMessage || data?.error || "Login failed.";
+        setStatus(msg, "err");
       }
+    } catch (e) {
+      console.error(e);
+      setStatus("Login failed (see console).", "err");
+    } finally {
+      btn.disabled = false;
     }
+  }
 
-    function logout(){
-      setStoredId(null);
-      elBal.textContent = "—";
-      setStatus("Logged out.");
+  function logout() {
+    sessionTicket = "";
+    playFabId = "";
+    delLocal("ih_session");
+    delLocal("ih_playfab_id");
+    reflectLoginState();
+    setText("bal", "—");
+    setStatus("Logged out.");
+  }
+
+  async function refreshBalance() {
+    if (!sessionTicket || !playFabId) {
+      setStatus("Log in first to refresh balance.", "warn");
+      return;
     }
-
-    async function refreshBalance(){
-      const id = getStoredId();
-      if(!id){ setStatus("Please log in to load balance."); return; }
-      setStatus("Loading balance…");
-      refreshBtn.disabled = true;
-      try{
-        // Get currency for the user (virtual currency code "IH")
-        const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/GetUserInventory`, {
-          method:"POST", headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ PlayFabId: id })
-        }).then(r=>r.json());
-        // Some titles track currency via "GetUserInventory" or "GetUserReadOnlyData".
-        // If your title tracks currency elsewhere, adapt this call accordingly.
-        const vc = res?.data?.VirtualCurrency || {};
-        const amount = vc.IH ?? 0;
-        elBal.textContent = amount;
-        setStatus("Up to date.");
-      }catch(e){
-        console.error(e);
-        setStatus("Failed to fetch balance (see console).");
-      }finally{
-        refreshBtn.disabled=false;
+    setStatus("Fetching balance…");
+    try {
+      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/GetUserInventory`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Authorization": sessionTicket
+        },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      // console.log("[IH] GetUserInventory:", data);
+      if (res.ok && data?.code === 200) {
+        const vc = data?.data?.VirtualCurrency || {};
+        const amt = vc[CURRENCY_CODE] ?? 0;
+        setText("bal", String(amt));
+        setStatus("Up to date.", "ok");
+      } else {
+        const msg = data?.errorMessage || data?.error || "Failed to fetch balance.";
+        setStatus(msg, "err");
       }
+    } catch (e) {
+      console.error(e);
+      setStatus("Failed to fetch balance (see console).", "err");
     }
+  }
 
-    // Wire up UI
-    loginBtn.onclick = login;
-    logoutBtn.onclick = logout;
-    refreshBtn.onclick = refreshBalance;
+  function openCheckout500() {
+    if (!playFabId) { setStatus("Log in before buying.", "warn"); return; }
+    const link = pickLink();
+    const url = link + "?metadata=" + encodeURIComponent(JSON.stringify({ playerId: playFabId }));
+    // open in a new tab; user will pay there
+    window.open(url, "_blank", "noopener,noreferrer");
+    setStatus("Checkout opened in a new tab. After paying, click Refresh.", "ok");
+  }
 
-    // Init
-    setStoredId(getStoredId());
-    if (getStoredId()) refreshBalance();
-  </script>
+  /*********** WIRE UI ***********/
+  document.getElementById("loginBtn").addEventListener("click", loginEmail);
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+  document.getElementById("refreshBtn").addEventListener("click", refreshBalance);
+  document.getElementById("buy500Btn").addEventListener("click", openCheckout500);
+
+  // restore session if present
+  reflectLoginState();
+  if (sessionTicket && playFabId) {
+    refreshBalance();
+  }
+</script>
 </body>
 </html>

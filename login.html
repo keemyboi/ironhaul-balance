@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Login • Iron Haul</title>
+  <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0b0f14;color:#dbe3ec;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+    .card{background:#121922;padding:24px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.5);width:420px}
+    h1{margin:0 0 8px}
+    .muted{opacity:.75;margin:0 0 16px}
+    button{padding:12px 16px;border:0;border-radius:12px;background:#2b8cff;color:#fff;font-weight:700;cursor:pointer}
+    .ok{margin-top:12px;padding:10px;background:#0f1b2a;border-radius:8px}
+    code{background:#0c141d;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Sign in to Iron Haul</h1>
+    <p class="muted">Stores your <code>PlayFabId</code> so we can credit your account after checkout.</p>
+    <button id="loginBtn">Sign in</button>
+    <div id="out" class="ok" style="display:none"></div>
+  </div>
+
+  <script>
+    const TITLE_ID = "1A7FA4"; // e.g. 1A7FA4
+    PlayFab.settings.titleId = TITLE_ID;
+
+    function makeCustomId(){
+      const key="ih_custom_id"; let v=localStorage.getItem(key);
+      if(!v){ v="guest_"+crypto.randomUUID(); localStorage.setItem(key,v); }
+      return v;
+    }
+
+    function nextUrl(){
+      const params = new URLSearchParams(location.search);
+      return params.get("next") || "/";
+    }
+
+    async function login() {
+      document.getElementById("loginBtn").disabled = true;
+      try{
+        const body = { TitleId: TITLE_ID, CustomId: makeCustomId(), CreateAccount: true };
+        const res = await fetch("https://" + TITLE_ID + ".playfabapi.com/Client/LoginWithCustomID", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }).then(r=>r.json());
+
+        const id = res?.data?.PlayFabId;
+        if (!id) throw res;
+
+        localStorage.setItem("ih_playfab_id", id);
+        window.currentPlayFabId = id;
+
+        document.getElementById("out").style.display="block";
+        document.getElementById("out").textContent = "Signed in as PlayFabId: " + id;
+
+        setTimeout(()=>location.replace(nextUrl()), 600);
+      }catch(e){
+        console.error(e);
+        alert("Login failed. See console for details.");
+      }finally{
+        document.getElementById("loginBtn").disabled = false;
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", login);
+  </script>
+</body>
+</html>

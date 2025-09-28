@@ -17,47 +17,102 @@
       min-height:100vh; display:grid; place-items:center;
     }
     .box{
-      width:min(520px,92vw); background:var(--panel); border-radius:14px;
+      width:min(560px,92vw); background:var(--panel); border-radius:14px;
       box-shadow:0 18px 30px rgba(0,0,0,.45); padding:22px 22px 26px;
     }
     h1{margin:0 0 10px; font-size:20px}
+    p{margin:8px 0}
     .muted{color:var(--muted)}
-    a.btn{
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    a.btn, button.btn{
       display:inline-flex; align-items:center; justify-content:center;
-      height:40px; padding:0 14px; border-radius:10px; text-decoration:none;
-      background:var(--btn); color:#fff; font-weight:600;
+      height:40px; padding:0 14px; border-radius:10px; text-decoration:none; border:0;
+      background:var(--btn); color:#fff; font-weight:600; cursor:pointer;
     }
+    .btn.alt{ background:var(--btn-alt); color:var(--ink); }
     code{background:#10223d; padding:.2em .5em; border-radius:6px; color:#d5e2ff}
+    .hr{height:1px; background:#162238; opacity:.7; margin:16px 0}
+    .small{font-size:12px}
   </style>
 </head>
 <body>
   <div class="box">
     <h1>Opening checkout…</h1>
-    <p class="muted">If nothing happens, <a id="a" href="#" rel="noopener">click here</a>.</p>
-    <p class="muted">Your <code>playerId</code> is added as metadata so your IH balance is credited automatically.</p>
+    <p class="muted">We’ll include your <code>playerId</code> so your credits are granted automatically.</p>
+
+    <div class="hr"></div>
+
+    <p class="muted">
+      If nothing happens, <a id="fallback" class="btn" href="#" rel="noopener" target="_blank">Open Thirdweb Checkout</a>
+    </p>
+
+    <div class="row" style="margin-top:10px">
+      <a class="btn alt" id="backBtn" href="#">Return to Console</a>
+    </div>
+
+    <p class="small muted" id="debug" style="margin-top:12px">—</p>
   </div>
 
   <script>
-    // If not logged in, send to login and bounce back here
-    const id = localStorage.getItem("ih_playfab_id");
-    if (!id) {
-      const next = encodeURIComponent("/ironhaul-balance/buy-500.html");
-      location.replace("login.html?next=" + next);
-    } else {
-      // Put YOUR Thirdweb Pay links here (keep an array; first will be used)
-      const CANDIDATE_LINKS = [
-        "https://thirdweb.com/pay/38a4a150-e9b7-4380-a820-1f0dee3a0deb",
-        "https://thirdweb.com/pay/540a5b5b-c1e6-4142-8ca0-4c30cee46969"
-      ];
-      const link = CANDIDATE_LINKS[0];
-      const url  = link + "?metadata=" + encodeURIComponent(JSON.stringify({ playerId: id }));
+    /******** CONFIG ********/
+    // Keep multiple links if you’re testing different Payment Links. First valid is used.
+    const CANDIDATE_LINKS = [
+      "https://thirdweb.com/pay/38a4a150-e9b7-4380-a820-1f0dee3a0deb",
+      "https://thirdweb.com/pay/540a5b5b-c1e6-4142-8ca-4c30cee46969",
+    ];
 
-      // visible fallback
-      document.getElementById("a").href = url;
+    /******** PATHS (relative-safe for GitHub Pages) ********/
+    const BASE = (location.pathname.endsWith("/")
+                 ? location.pathname
+                 : location.pathname.slice(0, location.pathname.lastIndexOf("/")+1));
+    const INDEX = BASE + "index.html";
 
-      // same-tab open (change to window.open(url, "_blank","noopener") if preferred)
-      location.replace(url);
+    /******** HELPERS ********/
+    const $ = (s)=>document.querySelector(s);
+    function debug(msg){ $("#debug").textContent = msg; }
+
+    function firstLink(){
+      // Optional: allow a specific product via ?link=n
+      const u = new URL(location.href);
+      const idx = parseInt(u.searchParams.get("link")||"", 10);
+      if (!isNaN(idx) && CANDIDATE_LINKS[idx]) return CANDIDATE_LINKS[idx];
+      return CANDIDATE_LINKS.find(Boolean);
     }
+
+    function openCheckoutWith(playerId){
+      const link = firstLink();
+      if (!link) { debug("No Thirdweb link configured."); return; }
+
+      const url = link + "?metadata=" + encodeURIComponent(JSON.stringify({ playerId }));
+
+      // set fallback anchor
+      const a = $("#fallback");
+      a.href = url;
+
+      // open in new tab
+      const w = window.open(url, "_blank", "noopener");
+      if (!w) {
+        // Popup blocked—user can click the button
+        debug("Popup was blocked. Click the button above to open checkout.");
+      } else {
+        debug("Checkout opened in a new tab. Complete the payment, then return and refresh your balance.");
+      }
+    }
+
+    /******** FLOW ********/
+    (function init(){
+      $("#backBtn").href = INDEX;
+
+      const playerId = localStorage.getItem("ih_playfab_id");
+      if (!playerId) {
+        // Not logged in → back to console to log in
+        location.replace(INDEX + "?login=1");
+        return;
+      }
+
+      // Go!
+      openCheckoutWith(playerId);
+    })();
   </script>
 </body>
 </html>

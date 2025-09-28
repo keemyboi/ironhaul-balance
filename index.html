@@ -1,298 +1,159 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>IRON HAUL — Credits Console</title>
-
-  <!-- PlayFab Client JS SDK -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
-
   <style>
-    :root {
-      --bg: #0a0f14;
-      --panel: #131a22;
-      --steel: #1c2530;
-      --accent: #60a5fa;
-      --txt: #e5e7eb;
-      --muted: #9ca3af;
-      --good: #86efac;
-      --bad: #fca5a5;
-      --grid: radial-gradient(#0f1622 1px, transparent 1px), radial-gradient(#0f1622 1px, transparent 1px);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; color:var(--txt); background:var(--bg);
-      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, Helvetica, sans-serif;
-      background-image:
-        linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,0) 40%),
-        var(--grid);
-      background-position: 0 0, 25px 25px;
-      background-size: auto, 50px 50px;
-    }
-    .wrap{max-width:840px;margin:40px auto;padding:0 16px}
-    .head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-    .logo{
-      width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#1e293b,#0b1220);
-      box-shadow: inset 0 0 0 2px #0f172a, 0 12px 40px rgba(0,0,0,.35);
-      display:grid;place-items:center;
-    }
-    .logo:before{content:"";width:18px;height:18px;border:2px solid #334155;border-radius:4px;transform:rotate(45deg)}
-    h1{margin:0;font-size:22px;letter-spacing:.04em}
-    .sub{color:var(--muted);font-size:13px;margin-top:2px}
-    .grid{display:grid;gap:14px}
-    .card{
-      background:linear-gradient(180deg,var(--panel),#0f151c);
-      border:1px solid #0e1620;border-radius:16px;padding:18px;
-      box-shadow:0 8px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03);
-    }
-    label{display:block;font-size:13px;color:var(--muted);margin:6px 0 6px}
-    input{
-      width:100%;padding:12px 12px;border-radius:10px;
-      background:#0d141c;border:1px solid #17202b;color:var(--txt);
-      outline:0;
-    }
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    button{
-      padding:10px 14px;border:0;border-radius:10px;
-      background:var(--accent);color:#04101d;font-weight:700;cursor:pointer
-    }
-    .ghost{background:#0f1622;color:var(--txt);border:1px solid #1f2a38}
-    .btn_small{padding:8px 10px;font-size:13px}
-    .muted{color:var(--muted);font-size:.92rem}
-    .ok{color:var(--good)} .err{color:var(--bad)}
-    .status{min-height:22px;margin-top:8px}
-    #balance{font-size:36px;letter-spacing:.02em}
-    .bar{height:1px;background:linear-gradient(90deg,#0b1118,#273449 40%,#0b1118)}
-    .tag{font:600 12px/1 system-ui;padding:6px 10px;border-radius:999px;background:#0e1620;border:1px solid #1e293b;color:#9fb4cc}
-    .toprow{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px}
-    .spinner{width:14px;height:14px;border:2px solid #93c5fd;border-top-color:transparent;border-radius:50%;display:inline-block;vertical-align:-2px;animation:spin .9s linear infinite;margin-right:6px}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    :root { color-scheme: dark; }
+    body{margin:0;background:#0a0f14;color:#d7e2ee;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:920px;margin:48px auto;padding:0 20px}
+    .panel{background:#101824;border:1px solid #1b2736;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);padding:22px}
+    .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .title{letter-spacing:.08em;font-weight:800}
+    .badge{font:12px/1.8 system-ui;background:#0f1b2a;border:1px solid #213247;border-radius:999px;padding:2px 10px;color:#a9c4e0}
+    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+    button, .btn{background:#2b8cff;border:0;color:#fff;font-weight:800;letter-spacing:.02em;padding:12px 16px;border-radius:12px;cursor:pointer}
+    button[disabled]{opacity:.5;cursor:not-allowed}
+    .muted{opacity:.75}
+    .value{font-size:46px;font-weight:900;margin:10px 0 6px}
+    .card{background:#0f1621;border:1px dashed #203045;border-radius:14px;padding:16px;margin-top:16px}
+    a.btn {text-decoration:none;display:inline-block}
+    .grid{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="head">
-      <div class="logo"></div>
-      <div>
-        <h1>IRON HAUL — Credits Console</h1>
-        <div class="sub">Authenticate • Check balance • Buy IH with crypto / card</div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <!-- LOGIN / REGISTER -->
-      <div class="card" id="authCard">
-        <div class="toprow">
-          <div class="row" style="gap:8px">
-            <span class="tag">Auth</span>
-            <span class="muted" id="authHint">Use your PlayFab email & password</span>
-          </div>
-        </div>
-
-        <div class="row" style="gap:12px;flex-wrap:wrap">
-          <div style="flex:1;min-width:240px">
-            <label>Email</label>
-            <input id="email" type="email" placeholder="you@example.com"/>
-          </div>
-          <div style="flex:1;min-width:200px">
-            <label>Password</label>
-            <input id="password" type="password" placeholder="••••••••"/>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:12px">
-          <button id="loginBtn">Log in</button>
-          <button id="registerBtn" class="ghost">Register</button>
-        </div>
-        <div id="authStatus" class="status muted"></div>
+    <div class="panel">
+      <div class="hdr">
+        <div class="title">IRON HAUL — Credits Console</div>
+        <span class="badge" id="who">logged out</span>
       </div>
 
-      <!-- BALANCE / BUY -->
-      <div class="card" id="walletCard" style="display:none">
-        <div class="toprow">
-          <div>
-            <div class="muted">Logged in as</div>
-            <div id="playerId" style="font-weight:800;letter-spacing:.03em;margin-top:3px"></div>
-          </div>
-          <div class="row">
-            <button id="logoutBtn" class="ghost btn_small">Log out</button>
-          </div>
-        </div>
-
-        <div class="bar"></div>
-
-        <div class="row" style="justify-content:space-between;margin:16px 0 6px">
+      <div class="grid">
+        <div>
           <div class="muted">IH Balance</div>
-          <div id="balanceStatus" class="muted"></div>
+          <div class="value" id="bal">—</div>
+          <div class="muted mono" id="status">Ready</div>
         </div>
-
-        <div id="balance">—</div>
-
-        <div class="row" style="margin-top:14px">
-          <button id="refreshBtn" class="ghost">Refresh</button>
-          <button id="buy500Btn">Buy 500 IH</button>
+        <div class="row">
+          <button id="refreshBtn">Refresh</button>
+          <a class="btn" href="./buy-500.html" id="buyBtn">Buy 500 IH</a>
+          <button id="loginBtn" style="background:#374a60">Log in</button>
+          <button id="logoutBtn" style="background:#5a2d2d">Log out</button>
         </div>
+      </div>
 
-        <div class="muted" style="margin-top:10px">
-          Checkout opens in a new tab. After paying, return here and click <b>Refresh</b> to update your balance.
+      <div class="card">
+        <div class="muted">
+          After paying, click <b>Refresh</b> to update your balance.
+          Purchases open Thirdweb checkout in a new tab and include your
+          <span class="mono">playerId</span> in metadata automatically.
         </div>
       </div>
     </div>
   </div>
 
-<script>
-/* =======================
-   CONFIG — FILL THESE IN
-   ======================= */
-const TITLE_ID = "1A7FA4";                                // TODO: your PlayFab Title ID
-//const PAYMENT_LINK_500 = "540a5b5b-c1e6-4142-8ca0-4c30cee46969"; // TODO: Thirdweb payment link id (500 IH)
-const PAYMENT_LINK_500 = "38a4a150-e9b7-4380-a820-1f0dee3a0deb"; // TODO: Thirdweb payment link id (500 IH)
+  <script>
+    // ================== CONFIG ===================
+    const TITLE_ID = "1A7FA4"; // e.g. 1A7FA4
+    PlayFab.settings.titleId = TITLE_ID;
+    // =============================================
 
-/* ===== PlayFab setup ===== */
-PlayFab.settings.titleId = TITLE_ID;
+    const elWho = document.getElementById("who");
+    const elBal = document.getElementById("bal");
+    const elStatus = document.getElementById("status");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
 
-/* ===== Shorthand ===== */
-const $ = (id) => document.getElementById(id);
-const authCard = $("authCard");
-const walletCard = $("walletCard");
-const authStatus = $("authStatus");
-const balanceStatus = $("balanceStatus");
-const balanceEl = $("balance");
-const playerIdEl = $("playerId");
-const emailEl = $("email");
-const passwordEl = $("password");
-const loginBtn = $("loginBtn");
-const registerBtn = $("registerBtn");
-const logoutBtn = $("logoutBtn");
-const refreshBtn = $("refreshBtn");
-const buy500Btn = $("buy500Btn");
+    function setStatus(s){ elStatus.textContent = s; }
+    function setWho(id){ elWho.textContent = id ? ("PlayFabId " + id) : "logged out"; }
 
-/* ===== UI helpers ===== */
-function setBusy(b){
-  [loginBtn, registerBtn, logoutBtn, refreshBtn, buy500Btn].forEach(btn=>{
-    if (btn) btn.disabled = !!b;
-  });
-}
-function showAuth(msg, type){
-  authStatus.classList.remove("ok","err");
-  if (type) authStatus.classList.add(type);
-  authStatus.innerHTML = msg || "";
-}
-function showBal(msg, type){
-  balanceStatus.classList.remove("ok","err");
-  if (type) balanceStatus.classList.add(type);
-  balanceStatus.innerHTML = msg || "";
-}
-function spinner(t){ return `<span class="spinner"></span>${t}`; }
-function swapUI(loggedIn){
-  authCard.style.display = loggedIn ? "none" : "";
-  walletCard.style.display = loggedIn ? "" : "none";
-}
+    function getStoredId(){
+      return localStorage.getItem("ih_playfab_id") || null;
+    }
+    function setStoredId(id){
+      if (id) localStorage.setItem("ih_playfab_id", id);
+      else localStorage.removeItem("ih_playfab_id");
+      setWho(id);
+      window.currentPlayFabId = id || undefined;
+    }
 
-/* ===== Login / Register / Logout ===== */
-async function login(email, password){
-  if(!email || !password){
-    showAuth("Please enter email and password","err"); return;
-  }
-  setBusy(true); showAuth(spinner("Logging in…"));
-  PlayFabClientSDK.LoginWithEmailAddress({
-    TitleId: TITLE_ID,
-    Email: email,
-    Password: password,
-    InfoRequestParameters: { GetUserAccountInfo: true }
-  }, (res, err) => {
-    setBusy(false);
-    if (err){ showAuth(formatErr("Login", err), "err"); return; }
-    const pid = res.data?.PlayFabId
-      || res.data?.InfoResultPayload?.AccountInfo?.PlayFabId
-      || "Unknown";
-    window.currentPlayFabId = pid;        // <-- expose id for checkout
-    playerIdEl.textContent = pid;
-    showAuth("Login successful.", "ok");
-    swapUI(true);
-    refreshBalance();
-  });
-}
+    // Simple demo login using CustomID. Replace with your real auth.
+    function makeCustomId(){
+      const key="ih_custom_id"; let v=localStorage.getItem(key);
+      if(!v){ v="guest_"+crypto.randomUUID(); localStorage.setItem(key,v); }
+      return v;
+    }
 
-async function register(email, password){
-  if(!email || !password){
-    showAuth("Please enter email and password","err"); return;
-  }
-  setBusy(true); showAuth(spinner("Creating account…"));
-  PlayFabClientSDK.RegisterPlayFabUser({
-    TitleId: TITLE_ID,
-    Email: email,
-    Password: password,
-    RequireBothUsernameAndEmail: false
-  }, (res, err) => {
-    setBusy(false);
-    if (err){ showAuth(formatErr("Register", err), "err"); return; }
-    showAuth("Account created. Logging in…");
-    login(email, password);
-  });
-}
+    async function login(){
+      setStatus("Logging in…");
+      loginBtn.disabled=true;
+      try{
+        const body = {
+          TitleId: TITLE_ID,
+          CustomId: makeCustomId(),
+          CreateAccount: true
+        };
+        const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/LoginWithCustomID`, {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(body)
+        }).then(r=>r.json());
+        const id = res?.data?.PlayFabId;
+        if(!id) throw res;
+        setStoredId(id);
+        setStatus("Logged in.");
+        await refreshBalance();
+      }catch(e){
+        console.error(e);
+        setStatus("Login failed (see console).");
+      }finally{
+        loginBtn.disabled=false;
+      }
+    }
 
-function logout(){
-  setBusy(true); showBal(spinner("Signing out…"));
-  try { PlayFab._internalSettings.sessionTicket = null; } catch(e){}
-  window.currentPlayFabId = null;
-  playerIdEl.textContent = "";
-  balanceEl.textContent = "—";
-  showBal("");
-  showAuth("Signed out.","ok");
-  swapUI(false);
-  setBusy(false);
-}
+    function logout(){
+      setStoredId(null);
+      elBal.textContent = "—";
+      setStatus("Logged out.");
+    }
 
-/* ===== Balance ===== */
-function refreshBalance(){
-  setBusy(true);
-  showBal(spinner("Fetching balance…"));
-  balanceEl.textContent = "…";
-  PlayFabClientSDK.GetUserInventory({}, (res, err) => {
-    setBusy(false);
-    if (err){ showBal(formatErr("GetUserInventory", err), "err"); return; }
-    const vc = res.data?.VirtualCurrency || {};
-    balanceEl.textContent = vc["IH"] ?? 0;
-    showBal("Up to date.","ok");
-  });
-}
+    async function refreshBalance(){
+      const id = getStoredId();
+      if(!id){ setStatus("Please log in to load balance."); return; }
+      setStatus("Loading balance…");
+      refreshBtn.disabled = true;
+      try{
+        // Get currency for the user (virtual currency code "IH")
+        const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/GetUserInventory`, {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ PlayFabId: id })
+        }).then(r=>r.json());
+        // Some titles track currency via "GetUserInventory" or "GetUserReadOnlyData".
+        // If your title tracks currency elsewhere, adapt this call accordingly.
+        const vc = res?.data?.VirtualCurrency || {};
+        const amount = vc.IH ?? 0;
+        elBal.textContent = amount;
+        setStatus("Up to date.");
+      }catch(e){
+        console.error(e);
+        setStatus("Failed to fetch balance (see console).");
+      }finally{
+        refreshBtn.disabled=false;
+      }
+    }
 
-/* ===== Thirdweb Checkout (passes metadata.playerId) ===== */
-function openCheckout500(){
-  const playerId = window.currentPlayFabId;
-  if (!playerId){
-    alert("Please log in first so we can credit your account.");
-    return;
-  }
-  const base = `https://thirdweb.com/pay/${PAYMENT_LINK_500}`;
-  const url  = `${base}?metadata=${encodeURIComponent(JSON.stringify({ playerId }))}`;
-  window.open(url, "_blank", "noopener");
-}
+    // Wire up UI
+    loginBtn.onclick = login;
+    logoutBtn.onclick = logout;
+    refreshBtn.onclick = refreshBalance;
 
-/* ===== Utilities ===== */
-function formatErr(where, err){
-  const msg = (err && (err.errorMessage || err.error || err.code)) || "Unknown error";
-  const details = err && err.errorDetails ? " " + JSON.stringify(err.errorDetails) : "";
-  console.error(`[${where}]`, err);
-  return `${where} failed: ${msg}${details}`;
-}
-
-/* ===== Wire up ===== */
-loginBtn.onclick    = () => login(emailEl.value.trim(), passwordEl.value);
-registerBtn.onclick = () => register(emailEl.value.trim(), passwordEl.value);
-logoutBtn.onclick   = logout;
-refreshBtn.onclick  = refreshBalance;
-buy500Btn.onclick   = openCheckout500;
-
-/* Optional: if the user returns focus to the tab after paying, prompt to refresh */
-window.addEventListener("focus", () => {
-  if (walletCard.style.display !== "none") {
-    showBal("Back from checkout? Click Refresh to update.", null);
-  }
-});
-</script>
+    // Init
+    setStoredId(getStoredId());
+    if (getStoredId()) refreshBalance();
+  </script>
 </body>
 </html>

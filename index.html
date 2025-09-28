@@ -4,164 +4,200 @@
   <meta charset="utf-8" />
   <title>IRON HAUL — Credits Console</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://1a7fa4.playfabapi.com" />
   <style>
-    :root{--bg:#0b0e13;--card:#121826;--muted:#a8b3cf;--txt:#e7eefc;--brand:#3b82f6;--ok:#10b981;--warn:#f59e0b;--err:#ef4444}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
-    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-    .card{width:100%;max-width:880px;background:var(--card);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:24px 28px}
-    h1{margin:0 0 6px;font-size:20px;letter-spacing:.3px}
-    .row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-    .sp{height:1px;background:rgba(255,255,255,.06);margin:18px 0}
-    .muted{color:var(--muted)} code{background:#0f1422;padding:2px 6px;border-radius:6px}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:#0f1422}
-    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-    .btn:disabled{opacity:.6;cursor:not-allowed} .btn.alt{background:#233048} .btn.bad{background:var(--err)}
-    label{display:block;font-size:12px;color:var(--muted);margin:6px 2px}
-    input{width:100%;background:#0f1422;border:1px solid #1b2437;color:var(--txt);border-radius:8px;padding:10px 12px}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px} @media(max-width:720px){.grid{grid-template-columns:1fr}}
-    .stat{font-size:14px} .stat strong{font-size:24px}
-    .status.ok{color:var(--ok)} .status.err{color:var(--err)} .status.warn{color:var(--warn)}
+    :root {
+      --bg: #0b1220;
+      --panel: #0f1a2b;
+      --ink: #d7e1ff;
+      --muted: #8ba0c6;
+      --ok: #5dd39e;
+      --bad: #ff6b6b;
+      --link: #5aa2ff;
+      --btn: #2f78ff;
+      --btn-alt: #1e2a42;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      width: min(920px, 92vw);
+      background: var(--panel);
+      border-radius: 14px;
+      box-shadow: 0 18px 30px rgba(0,0,0,.45);
+      padding: 22px 22px 26px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: .2px;
+    }
+    .muted { color: var(--muted); }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .stat { font-size: 14px; margin: 8px 0 2px; }
+    .stat strong { font-size: 40px; letter-spacing: .5px; }
+    .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #0c213e; color: var(--muted); }
+    .pill small { opacity: .85; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 38px; padding: 0 14px; border-radius: 10px;
+      background: var(--btn); color: white; font-weight: 600;
+      border: 0; cursor: pointer; text-decoration: none; outline: none;
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn.alt { background: var(--btn-alt); color: var(--ink); }
+    .btn.bad { background: #6b1e1e; }
+    code { background: #10223d; padding: .2em .5em; border-radius: 6px; color: #d5e2ff; }
+    .hr { height: 1px; background: #162238; margin: 16px 0; opacity: .7; }
+    .grow { flex: 1 }
   </style>
 </head>
 <body>
-<div class="wrap">
   <div class="card">
-    <div class="row" style="justify-content:space-between">
-      <div>
-        <h1>IRON HAUL — Credits Console</h1>
-        <div class="muted">Authenticate • Check balance • Buy IH with crypto / card</div>
-      </div>
-      <div class="pill muted"><span id="loginState">logged out</span></div>
+    <div class="row" style="justify-content:space-between; gap:10px">
+      <h1>IRON HAUL — Credits Console</h1>
+      <span class="pill"><small id="loginState">logged out</small></span>
     </div>
 
-    <div class="sp"></div>
+    <!-- Balance section (hidden until logged in) -->
+    <div id="balWrap" style="display:none">
+      <div class="stat muted">IH Balance</div>
+      <div class="stat"><strong id="bal">—</strong></div>
 
-    <div class="grid">
-      <div>
-        <!-- Balance card (hidden until logged in) -->
-        <div id="balWrap" style="display:none">
-          <div class="stat muted">IH Balance</div>
-          <div class="stat"><strong id="bal">—</strong></div>
-          <div class="row" style="margin-top:12px">
-            <button class="btn alt" id="refreshBtn">Refresh</button>
-            <a class="btn" id="buy500Btn" href="buy-500.html">Buy 500 IH</a>
-            <button class="btn bad" id="logoutBtn">Log out</button>
-          </div>
-          <p class="muted" style="margin-top:10px">
-            After paying, click <b>Refresh</b> to update your balance. Checkout includes your
-            <code>playerId</code> in <code>metadata</code>.
-          </p>
-        </div>
-        <!-- Message to show when logged out -->
-        <p id="loggedOutMsg" class="muted">
-          Log in to view your IH balance and purchase credits.
-        </p>
+      <div class="row" style="margin-top:12px">
+        <button class="btn alt" id="refreshBtn">Refresh</button>
+        <!-- RELATIVE links so GitHub Pages doesn't 404 -->
+        <a class="btn" id="buy500Btn" href="buy-500.html">Buy 500 IH</a>
+        <div class="grow"></div>
+        <button class="btn bad" id="logoutBtn">Log out</button>
       </div>
 
-      <div>
-        <label>Email</label>
-        <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
-        <label>Password</label>
-        <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-        <div class="row" style="margin-top:10px">
-          <button class="btn" id="loginBtn">Log in</button>
-          <a class="btn alt" href="login.html">Open login page</a>
-        </div>
-        <p class="muted" style="margin-top:10px">Only existing accounts can log in here (no web sign-up).</p>
-      </div>
+      <p class="muted" style="margin-top:10px">
+        After paying, click <b>Refresh</b> to update your balance.
+        Purchases open Thirdweb checkout in a new tab and include your
+        <code>playerId</code> in <code>metadata</code> automatically.
+      </p>
     </div>
 
-    <div class="sp"></div>
-    <div class="muted" id="status">Ready.</div>
+    <!-- Message shown when logged out -->
+    <p id="loggedOutMsg" class="muted" style="margin: 6px 0 0">
+      Log in to view your IH balance and purchase credits.
+    </p>
+
+    <div class="hr"></div>
+
+    <div class="row">
+      <!-- RELATIVE link to login page -->
+      <a class="btn alt" href="login.html">Log in</a>
+      <div id="status" class="muted" style="margin-left:8px">—</div>
+    </div>
   </div>
-</div>
 
-<script>
-  // ====== CONFIG ======
-  const TITLE_ID = "1A7FA4";
-  const CURRENCY_CODE = "IH";
+  <script>
+    /***********************
+     * CONFIG
+     ***********************/
+    // Change this if your title is different:
+    const TITLE_ID = "1A7FA4"; // e.g. "1A7FA4"
 
-  // ====== STORAGE ======
-  let sessionTicket = localStorage.getItem("ih_session") || "";
-  let playFabId     = localStorage.getItem("ih_playfab_id") || "";
+    /***********************
+     * STATE
+     ***********************/
+    let sessionTicket = localStorage.getItem("ih_session") || "";
+    let playFabId     = localStorage.getItem("ih_playfab_id") || "";
 
-  function setStatus(s, kind=""){ const el=document.getElementById("status"); el.textContent=s; el.className="muted status "+kind; }
-  function setText(id, s){ const el=document.getElementById(id); if (el) el.textContent=s; }
+    /***********************
+     * DOM helpers
+     ***********************/
+    const $ = (sel) => document.querySelector(sel);
+    function setText(id, text){ const el = typeof id === "string" ? document.getElementById(id) : id; if (el) el.textContent = text; }
+    function show(el, on){ el.style.display = on ? "" : "none"; }
+    function setStatus(msg, tone){
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.style.color = tone === "ok" ? "var(--ok)" : tone === "bad" ? "var(--bad)" : "var(--muted)";
+    }
 
-  function show(el, on){ el.style.display = on ? "" : "none"; }
-  function reflectLogin(){
-    const loggedIn = !!playFabId && !!sessionTicket;
-    setText("loginState", loggedIn ? `logged in as ${playFabId}` : "logged out");
-    const balWrap = document.getElementById("balWrap");
-    const msg = document.getElementById("loggedOutMsg");
-    show(balWrap, loggedIn);
-    show(msg, !loggedIn);
-  }
+    function reflectLogin(){
+      const loggedIn = !!sessionTicket && !!playFabId;
+      setText("loginState", loggedIn ? `logged in as ${playFabId}` : "logged out");
+      show(document.getElementById("balWrap"), loggedIn);
+      show(document.getElementById("loggedOutMsg"), !loggedIn);
+    }
 
-  async function loginEmail(){
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    if(!email || !password){ setStatus("Enter email and password.","warn"); return; }
-    document.getElementById("loginBtn").disabled = true;
-    setStatus("Logging in…");
-    try{
-      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/LoginWithEmailAddress`, {
-        method:"POST", headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ TitleId: TITLE_ID, Email: email, Password: password })
+    /***********************
+     * API helpers
+     ***********************/
+    async function pf(path, body, opts = {}){
+      const headers = {
+        "Content-Type": "application/json",
+        ...(opts.auth ? { "X-Authorization": sessionTicket } : {})
+      };
+      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/${path}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body || {})
       });
-      const data = await res.json();
-      if(res.ok && data?.code===200){
-        sessionTicket = data.data.SessionTicket;
-        playFabId = data.data.PlayFabId || data?.data?.InfoResultPayload?.AccountInfo?.PlayFabId || "";
-        if(!playFabId) throw new Error("No PlayFabId in response");
-        localStorage.setItem("ih_session", sessionTicket);
-        localStorage.setItem("ih_playfab_id", playFabId);
-        reflectLogin();
-        setStatus("Logged in.","ok");
-        refreshBalance();
-      }else{
-        setStatus(data?.errorMessage || data?.error || "Login failed.","err");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error) {
+        const code = json?.errorCode || res.status;
+        const name = json?.error || res.statusText;
+        const msg  = json?.errorMessage || "Request failed";
+        const err  = new Error(`${name} (${code}): ${msg}`);
+        err.data = json;
+        throw err;
       }
-    }catch(e){ console.error(e); setStatus("Login failed (see console).","err"); }
-    finally{ document.getElementById("loginBtn").disabled = false; }
-  }
+      return json;
+    }
 
-  function logout(){
-    sessionTicket="";
-    playFabId="";
-    localStorage.removeItem("ih_session");
-    localStorage.removeItem("ih_playfab_id");
-    setText("bal","—");
+    async function refreshBalance(){
+      if (!sessionTicket) { setStatus("Not logged in.", "bad"); return; }
+      setStatus("Fetching balance…");
+      try {
+        const json = await pf("GetUserInventory", {}, { auth: true });
+        const vc = json?.data?.VirtualCurrency || {};
+        const ih = Number(vc["IH"] || 0);
+        setText("bal", ih.toLocaleString());
+        setStatus("Balance updated.", "ok");
+      } catch (e) {
+        const tooMany = e?.data?.status === "TooManyRequests" || e?.data?.errorCode === 1199;
+        setStatus(tooMany ? "Throttled by PlayFab. Try again in a few seconds." : e.message, "bad");
+      }
+    }
+
+    function logout(){
+      sessionTicket = "";
+      playFabId = "";
+      localStorage.removeItem("ih_session");
+      localStorage.removeItem("ih_playfab_id");
+      setText("bal","—");
+      reflectLogin();
+      setStatus("Logged out.");
+    }
+
+    /***********************
+     * Wire up UI
+     ***********************/
+    document.getElementById("refreshBtn").addEventListener("click", refreshBalance);
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    // Initial paint
     reflectLogin();
-    setStatus("Logged out.");
-  }
-
-  async function refreshBalance(){
-    if(!sessionTicket || !playFabId){ setStatus("Log in first to refresh balance.","warn"); return; }
-    setStatus("Fetching balance…");
-    try{
-      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/GetUserInventory`, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "X-Authorization": sessionTicket },
-        body: JSON.stringify({})
-      });
-      const data = await res.json();
-      if(res.ok && data?.code===200){
-        const amt = (data?.data?.VirtualCurrency || {})[CURRENCY_CODE] ?? 0;
-        setText("bal", String(amt)); setStatus("Up to date.","ok");
-      }else{
-        setStatus(data?.errorMessage || data?.error || "Failed to fetch balance.","err");
-      }
-    }catch(e){ console.error(e); setStatus("Failed to fetch balance (see console).","err"); }
-  }
-
-  document.getElementById("loginBtn").addEventListener("click", loginEmail);
-  document.getElementById("logoutBtn").addEventListener("click", logout);
-  document.getElementById("refreshBtn").addEventListener("click", refreshBalance);
-
-  // Restore if present
-  reflectLogin();
-  if(sessionTicket && playFabId){ refreshBalance(); }
-</script>
+    if (sessionTicket && playFabId) {
+      // Try to show balance immediately
+      refreshBalance();
+    } else {
+      setStatus("Log in to view your balance.");
+    }
+  </script>
 </body>
 </html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Buy 500 IH • Redirecting…</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0b0f14;color:#dbe3ec;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+    .box{background:#121922;padding:24px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.5);width:520px}
+    .muted{opacity:.75}
+    code{background:#0c141d;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Opening checkout…</h1>
+    <p class="muted">If nothing happens, <a id="a" href="#" target="_blank" rel="noopener">click here</a>.</p>
+    <p class="muted">Your <code>playerId</code> is added as metadata so your IH balance is credited automatically.</p>
+  </div>
+
+  <script>
+    const id = localStorage.getItem("ih_playfab_id");
+    if (!id) {
+      location.replace("./login.html?next=" + encodeURIComponent(location.pathname + location.search));
+    } else {
+      // Keep both: pick the one you currently sell from
+      const CANDIDATE_LINKS = [
+        "https://thirdweb.com/pay/38a4a150-e9b7-4380-a820-1f0dee3a0deb",
+        "https://thirdweb.com/pay/540a5b5b-c1e6-4142-8ca0-4c30cee46969"
+      ];
+      const link = CANDIDATE_LINKS[0];
+
+      const url = link + "?metadata=" + encodeURIComponent(JSON.stringify({ playerId: id }));
+      document.getElementById("a").href = url;
+      location.replace(url);
+    }
+  </script>
+</body>
+</html>

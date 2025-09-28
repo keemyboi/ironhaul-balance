@@ -37,7 +37,7 @@
   if(!pid){
     // bounce to login, then back to here
     const here = location.pathname + location.search;
-    location.replace(`/login.html?next=${encodeURIComponent(here)}`);
+    location.replace(`login.html?next=${encodeURIComponent(here)}`);
   }else{
     const link = pickLink();
     const url  = link + "?metadata=" + encodeURIComponent(JSON.stringify({ playerId: pid }));

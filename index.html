@@ -4,200 +4,337 @@
   <meta charset="utf-8" />
   <title>IRON HAUL — Credits Console</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="preconnect" href="https://1a7fa4.playfabapi.com" />
   <style>
-    :root {
-      --bg: #0b1220;
-      --panel: #0f1a2b;
-      --ink: #d7e1ff;
-      --muted: #8ba0c6;
-      --ok: #5dd39e;
-      --bad: #ff6b6b;
-      --link: #5aa2ff;
-      --btn: #2f78ff;
-      --btn-alt: #1e2a42;
+    :root{
+      --bg:#0b1220; --panel:#0f1a2b; --ink:#d7e1ff; --muted:#8ba0c6;
+      --btn:#2f78ff; --btn-alt:#1e2a42; --ok:#5dd39e; --bad:#ff6b6b; --focus:#2a5bff;
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      min-height:100vh; display:grid; place-items:center;
     }
-    .card {
-      width: min(920px, 92vw);
-      background: var(--panel);
-      border-radius: 14px;
-      box-shadow: 0 18px 30px rgba(0,0,0,.45);
-      padding: 22px 22px 26px;
+    .wrap{width:min(880px,94vw); margin:auto}
+    .card{
+      background:var(--panel); border-radius:14px; padding:22px; box-shadow:0 18px 30px rgba(0,0,0,.45)
     }
-    h1 {
-      margin: 0 0 10px;
-      font-size: 20px;
-      letter-spacing: .2px;
+    h1{margin:0 0 8px; font-size:20px}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .spacer{flex:1}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      height:40px; padding:0 14px; border-radius:10px; border:0; cursor:pointer;
+      background:var(--btn); color:#fff; font-weight:600; text-decoration:none
     }
-    .muted { color: var(--muted); }
-    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .stat { font-size: 14px; margin: 8px 0 2px; }
-    .stat strong { font-size: 40px; letter-spacing: .5px; }
-    .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #0c213e; color: var(--muted); }
-    .pill small { opacity: .85; }
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      height: 38px; padding: 0 14px; border-radius: 10px;
-      background: var(--btn); color: white; font-weight: 600;
-      border: 0; cursor: pointer; text-decoration: none; outline: none;
+    .btn.alt{background:var(--btn-alt); color:var(--ink)}
+    .btn.warn{background:#4a2430}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+    .pill{height:26px; padding:0 10px; border-radius:999px; background:#0e1a2f; border:1px solid #1b2a44; display:inline-flex; align-items:center; gap:8px}
+    .bar{height:1px; background:#162238; opacity:.7; margin:16px 0}
+    .balance{
+      height:18px; width:130px; border-radius:999px; background:#0e1a2f; border:1px solid #1b2a44; position:relative; overflow:hidden
     }
-    .btn:hover { filter: brightness(1.08); }
-    .btn:disabled { opacity: .6; cursor: not-allowed; }
-    .btn.alt { background: var(--btn-alt); color: var(--ink); }
-    .btn.bad { background: #6b1e1e; }
-    code { background: #10223d; padding: .2em .5em; border-radius: 6px; color: #d5e2ff; }
-    .hr { height: 1px; background: #162238; margin: 16px 0; opacity: .7; }
-    .grow { flex: 1 }
+    .balance > i{position:absolute; inset:0; width:0%; background:linear-gradient(90deg,#2f78ff,#5dd39e)}
+    .big{font-size:32px; font-weight:800}
+    .hint{font-size:12px; color:var(--muted); margin-top:6px}
+
+    /* Dialog */
+    dialog{
+      border:0; padding:0; background:transparent;
+    }
+    .modal{
+      width:min(520px,92vw); background:var(--panel); color:var(--ink);
+      border-radius:14px; padding:22px 22px 24px; box-shadow:0 18px 30px rgba(0,0,0,.6)
+    }
+    .tabs{display:flex; gap:6px; margin:10px 0 14px}
+    .tab{flex:1; height:38px; border-radius:10px; background:#0e1a2f; color:var(--ink);
+      border:1px solid #1b2a44; display:flex; align-items:center; justify-content:center;
+      cursor:pointer; user-select:none; font-weight:600}
+    .tab.active{background:#173157; border-color:var(--focus)}
+    label{display:block; font-size:13px; color:var(--muted); margin:10px 0 6px}
+    input{
+      width:100%; height:40px; border-radius:10px; border:1px solid #1b2a44;
+      padding:0 12px; color:var(--ink); background:#0e1a2f; outline:none
+    }
+    input:focus{border-color:var(--focus)}
+    .field{position:relative}
+    .toggle-eye{position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--muted)}
+    .status{margin-top:10px; font-size:14px}
+    .hide{display:none}
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="row" style="justify-content:space-between; gap:10px">
-      <h1>IRON HAUL — Credits Console</h1>
-      <span class="pill"><small id="loginState">logged out</small></span>
-    </div>
-
-    <!-- Balance section (hidden until logged in) -->
-    <div id="balWrap" style="display:none">
-      <div class="stat muted">IH Balance</div>
-      <div class="stat"><strong id="bal">—</strong></div>
-
-      <div class="row" style="margin-top:12px">
-        <button class="btn alt" id="refreshBtn">Refresh</button>
-        <!-- RELATIVE links so GitHub Pages doesn't 404 -->
-        <a class="btn" id="buy500Btn" href="buy-500.html">Buy 500 IH</a>
-        <div class="grow"></div>
-        <button class="btn bad" id="logoutBtn">Log out</button>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <h1>IRON HAUL — Credits Console</h1>
+        <div class="spacer"></div>
+        <span class="pill" id="authPill"><small id="authState">logged out</small></span>
       </div>
 
-      <p class="muted" style="margin-top:10px">
+      <div class="bar"></div>
+
+      <div class="row" style="align-items:flex-end; gap:18px">
+        <div>
+          <div class="muted">IH Balance</div>
+          <div class="big" id="ihValue">—</div>
+          <div class="balance"><i id="barFill"></i></div>
+          <div class="hint">Balance only shows when you’re logged in.</div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="row" style="gap:8px">
+          <button class="btn" id="refreshBtn">Refresh</button>
+          <a class="btn" id="buyBtn" href="#">Buy 500 IH</a>
+          <button class="btn alt" id="loginBtn">Log in</button>
+          <button class="btn warn" id="logoutBtn">Log out</button>
+        </div>
+      </div>
+
+      <div class="bar"></div>
+      <p class="muted" style="margin:0">
+        Purchases open Thirdweb checkout in a new tab and include your <code>playerId</code> in metadata automatically.
         After paying, click <b>Refresh</b> to update your balance.
-        Purchases open Thirdweb checkout in a new tab and include your
-        <code>playerId</code> in <code>metadata</code> automatically.
       </p>
-    </div>
-
-    <!-- Message shown when logged out -->
-    <p id="loggedOutMsg" class="muted" style="margin: 6px 0 0">
-      Log in to view your IH balance and purchase credits.
-    </p>
-
-    <div class="hr"></div>
-
-    <div class="row">
-      <!-- RELATIVE link to login page -->
-      <a class="btn alt" href="login.html">Log in</a>
-      <div id="status" class="muted" style="margin-left:8px">—</div>
     </div>
   </div>
 
+  <!-- LOGIN DIALOG -->
+  <dialog id="loginDialog">
+    <form method="dialog" class="modal" onsubmit="return false">
+      <h2 style="margin:0 0 6px">Log in to IRON HAUL</h2>
+      <p class="muted" style="margin:0 0 10px">Website login never creates accounts — accounts are created in your game.</p>
+
+      <div class="tabs">
+        <div class="tab active" id="tab-custom">Custom ID</div>
+        <div class="tab" id="tab-email">Email &amp; Password</div>
+      </div>
+
+      <section id="form-custom">
+        <label for="customId">Custom ID</label>
+        <input id="customId" placeholder="Enter your PlayFab CustomID" autocomplete="off" />
+        <div class="hint">Use the exact ID the game assigned to you.</div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn" id="doLoginCustom">Log in</button>
+          <button class="btn alt" id="closeLogin">Cancel</button>
+        </div>
+      </section>
+
+      <section id="form-email" class="hide">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        <label for="password">Password</label>
+        <div class="field">
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+          <span id="togglePwd" class="toggle-eye" title="Show/Hide">👁</span>
+        </div>
+        <div class="hint">Must be an existing PlayFab account (created in-game).</div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn" id="doLoginEmail">Log in</button>
+          <button class="btn alt" id="closeLogin2">Cancel</button>
+        </div>
+      </section>
+
+      <div class="status muted" id="loginStatus">—</div>
+    </form>
+  </dialog>
+
   <script>
-    /***********************
-     * CONFIG
-     ***********************/
-    // Change this if your title is different:
-    const TITLE_ID = "1A7FA4"; // e.g. "1A7FA4"
+    /******** CONFIG ********/
+    const TITLE_ID = "1A7FA4";                // <- change if different
+    const BASE = (location.pathname.endsWith("/")
+                 ? location.pathname
+                 : location.pathname.slice(0, location.pathname.lastIndexOf("/")+1));
+    const BUY_PAGE = BASE + "buy-500.html";   // we’ll navigate here for purchases
 
-    /***********************
-     * STATE
-     ***********************/
-    let sessionTicket = localStorage.getItem("ih_session") || "";
-    let playFabId     = localStorage.getItem("ih_playfab_id") || "";
-
-    /***********************
-     * DOM helpers
-     ***********************/
-    const $ = (sel) => document.querySelector(sel);
-    function setText(id, text){ const el = typeof id === "string" ? document.getElementById(id) : id; if (el) el.textContent = text; }
-    function show(el, on){ el.style.display = on ? "" : "none"; }
-    function setStatus(msg, tone){
-      const el = document.getElementById("status");
-      el.textContent = msg;
-      el.style.color = tone === "ok" ? "var(--ok)" : tone === "bad" ? "var(--bad)" : "var(--muted)";
+    /******** DOM helpers ********/
+    const $  = (s)=>document.querySelector(s);
+    const on = (el,ev,fn)=>el.addEventListener(ev,fn);
+    function statusLogin(msg,tone){
+      const el=$("#loginStatus"); el.textContent=msg;
+      el.style.color = tone==="ok" ? "var(--ok)" : tone==="bad" ? "var(--bad)" : "var(--muted)";
     }
-
-    function reflectLogin(){
-      const loggedIn = !!sessionTicket && !!playFabId;
-      setText("loginState", loggedIn ? `logged in as ${playFabId}` : "logged out");
-      show(document.getElementById("balWrap"), loggedIn);
-      show(document.getElementById("loggedOutMsg"), !loggedIn);
+    function setAuthUI(isIn, id){
+      $("#authState").textContent = isIn ? `logged in` : "logged out";
+      $("#loginBtn").style.display   = isIn ? "none":"inline-flex";
+      $("#logoutBtn").style.display  = isIn ? "inline-flex":"none";
+      $("#buyBtn").style.pointerEvents = isIn ? "auto":"none";
+      $("#buyBtn").style.opacity       = isIn ? "1":"0.5";
+      $("#refreshBtn").disabled = !isIn;
+      $("#ihValue").textContent = isIn ? "…" : "—";
+      $("#barFill").style.width = "0%";
+      if (!isIn) {
+        $("#ihValue").textContent = "—";
+      }
     }
-
-    /***********************
-     * API helpers
-     ***********************/
-    async function pf(path, body, opts = {}){
-      const headers = {
-        "Content-Type": "application/json",
-        ...(opts.auth ? { "X-Authorization": sessionTicket } : {})
+    function session(){
+      return {
+        ticket: localStorage.getItem("ih_session") || "",
+        playerId: localStorage.getItem("ih_playfab_id") || ""
       };
-      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/${path}`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body || {})
+    }
+    function saveSession(json){
+      const st = json?.data?.SessionTicket;
+      const pid = json?.data?.PlayFabId;
+      if (!st || !pid) throw new Error("Invalid login response");
+      localStorage.setItem("ih_session", st);
+      localStorage.setItem("ih_playfab_id", pid);
+    }
+    function clearSession(){
+      localStorage.removeItem("ih_session");
+      localStorage.removeItem("ih_playfab_id");
+    }
+    async function pfClient(path, body, ticket){
+      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/${path}`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          ...(ticket ? {"X-Authorization":ticket} : {})
+        },
+        body: JSON.stringify(body||{})
       });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || json.error) {
-        const code = json?.errorCode || res.status;
-        const name = json?.error || res.statusText;
-        const msg  = json?.errorMessage || "Request failed";
-        const err  = new Error(`${name} (${code}): ${msg}`);
-        err.data = json;
-        throw err;
+      const json = await res.json().catch(()=>({}));
+      if(!res.ok || json.error){
+        const code=json?.errorCode||res.status, name=json?.error||res.statusText, msg=json?.errorMessage||"Request failed";
+        const err=new Error(`${name} (${code}): ${msg}`); err.data=json; throw err;
       }
       return json;
     }
 
+    /******** BALANCE ********/
     async function refreshBalance(){
-      if (!sessionTicket) { setStatus("Not logged in.", "bad"); return; }
-      setStatus("Fetching balance…");
-      try {
-        const json = await pf("GetUserInventory", {}, { auth: true });
-        const vc = json?.data?.VirtualCurrency || {};
-        const ih = Number(vc["IH"] || 0);
-        setText("bal", ih.toLocaleString());
-        setStatus("Balance updated.", "ok");
-      } catch (e) {
-        const tooMany = e?.data?.status === "TooManyRequests" || e?.data?.errorCode === 1199;
-        setStatus(tooMany ? "Throttled by PlayFab. Try again in a few seconds." : e.message, "bad");
+      const { ticket } = session();
+      if (!ticket){ setAuthUI(false); return; }
+      $("#refreshBtn").disabled = true;
+      try{
+        const inv = await pfClient("GetUserInventory", {}, ticket);
+        const vc  = inv?.data?.VirtualCurrency || {};
+        const ih  = Number(vc.IH||0);
+        $("#ihValue").textContent = ih.toString();
+        const fill = Math.max(0, Math.min(100, (ih % 1000) / 10)); // cosmetic fill
+        $("#barFill").style.width = fill + "%";
+      }catch(e){
+        // if ticket expired or invalid, force logout UI
+        setAuthUI(false);
+      }finally{
+        $("#refreshBtn").disabled = false;
       }
     }
 
-    function logout(){
-      sessionTicket = "";
-      playFabId = "";
-      localStorage.removeItem("ih_session");
-      localStorage.removeItem("ih_playfab_id");
-      setText("bal","—");
-      reflectLogin();
-      setStatus("Logged out.");
-    }
+    /******** BUY ********/
+    on($("#buyBtn"), "click", (e)=>{
+      e.preventDefault();
+      const { playerId, ticket } = session();
+      if (!playerId || !ticket){
+        openLogin();
+        return;
+      }
+      // Navigate to helper page which opens Thirdweb with metadata
+      location.href = BUY_PAGE;
+    });
 
-    /***********************
-     * Wire up UI
-     ***********************/
-    document.getElementById("refreshBtn").addEventListener("click", refreshBalance);
-    document.getElementById("logoutBtn").addEventListener("click", logout);
+    /******** LOGIN DIALOG ********/
+    const dlg = $("#loginDialog");
+    function openLogin(){ dlg.showModal(); statusLogin("—"); setTab("custom"); }
+    function closeLogin(){ dlg.close(); }
+    on($("#loginBtn"), "click", openLogin);
+    on($("#closeLogin"), "click", closeLogin);
+    on($("#closeLogin2"), "click", closeLogin);
+    on($("#togglePwd"), "click", ()=>{
+      const i=$("#password"); i.type = (i.type==="password" ? "text":"password");
+    });
 
-    // Initial paint
-    reflectLogin();
-    if (sessionTicket && playFabId) {
-      // Try to show balance immediately
-      refreshBalance();
-    } else {
-      setStatus("Log in to view your balance.");
+    function setTab(which){
+      const custom = which==="custom";
+      $("#tab-custom").classList.toggle("active", custom);
+      $("#tab-email").classList.toggle("active", !custom);
+      $("#form-custom").classList.toggle("hide", !custom);
+      $("#form-email").classList.toggle("hide", custom);
     }
+    on($("#tab-custom"), "click", ()=>setTab("custom"));
+    on($("#tab-email"), "click",  ()=>setTab("email"));
+
+    // Log out
+    on($("#logoutBtn"), "click", ()=>{
+      clearSession();
+      setAuthUI(false);
+    });
+
+    // Custom ID login
+    async function doLoginCustom(){
+      const id = $("#customId").value.trim();
+      if (!id){ statusLogin("Enter your Custom ID.", "bad"); return; }
+      $("#doLoginCustom").disabled = true;
+      statusLogin("Signing in…");
+      try{
+        const json = await pfClient("LoginWithCustomID",{ TitleId:TITLE_ID, CustomId:id, CreateAccount:false });
+        saveSession(json);
+        statusLogin("Logged in.", "ok");
+        setAuthUI(true);
+        closeLogin();
+        refreshBalance();
+      }catch(e){
+        const d=e?.data||{};
+        const code=d?.errorCode||"", name=d?.error||e.name, msg=d?.errorMessage||e.message;
+        if (code===22000 || name==="AccountNotFound" || name==="InvalidParams"){
+          statusLogin("Account not found for this Custom ID. Use the exact one from the game.", "bad");
+        } else if (code===1199 || d?.status==="TooManyRequests"){
+          statusLogin("Throttled by PlayFab. Please wait a few seconds and try again.", "bad");
+        } else {
+          statusLogin(`${name}: ${msg}`, "bad");
+        }
+      }finally{
+        $("#doLoginCustom").disabled = false;
+      }
+    }
+    on($("#doLoginCustom"), "click", doLoginCustom);
+    on($("#customId"), "keydown", (e)=>{ if(e.key==="Enter") doLoginCustom(); });
+
+    // Email + Password login
+    async function doLoginEmail(){
+      const email = $("#email").value.trim();
+      const pwd   = $("#password").value;
+      if (!email || !pwd){ statusLogin("Enter email and password.", "bad"); return; }
+      $("#doLoginEmail").disabled = true;
+      statusLogin("Signing in…");
+      try{
+        const json = await pfClient("LoginWithEmailAddress", { TitleId: TITLE_ID, Email: email, Password: pwd });
+        saveSession(json);
+        statusLogin("Logged in.", "ok");
+        setAuthUI(true);
+        closeLogin();
+        refreshBalance();
+      }catch(e){
+        const d=e?.data||{};
+        const code=d?.errorCode||"", name=d?.error||e.name, msg=d?.errorMessage||e.message;
+        if (name==="InvalidEmailOrPassword"){
+          statusLogin("Invalid email or password.", "bad");
+        } else if (code===1199 || d?.status==="TooManyRequests"){
+          statusLogin("Throttled by PlayFab. Please wait and try again.", "bad");
+        } else if (name==="AccountNotFound" || code===22000){
+          statusLogin("Account not found. Email login requires an existing account created in-game.", "bad");
+        } else {
+          statusLogin(`${name}: ${msg}`, "bad");
+        }
+      }finally{
+        $("#doLoginEmail").disabled = false;
+      }
+    }
+    on($("#doLoginEmail"), "click", doLoginEmail);
+    on($("#email"), "keydown", (e)=>{ if(e.key==="Enter") doLoginEmail(); });
+    on($("#password"), "keydown", (e)=>{ if(e.key==="Enter") doLoginEmail(); });
+
+    /******** INIT ********/
+    (function init(){
+      const { ticket, playerId } = session();
+      const isIn = !!(ticket && playerId);
+      setAuthUI(isIn);
+      if (isIn) refreshBalance();
+    })();
   </script>
 </body>
 </html>

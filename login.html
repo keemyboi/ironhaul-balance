@@ -1,102 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Log in — Iron Haul</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{margin:0;background:#0b0e13;color:#e7eefc;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;
+         display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .card{width:100%;max-width:460px;background:#121826;border-radius:16px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+    label{display:block;font-size:12px;color:#a8b3cf;margin:6px 2px}
+    input{width:100%;background:#0f1422;border:1px solid #1b2437;color:#e7eefc;border-radius:8px;padding:10px 12px}
+    .btn{width:100%;margin-top:12px;appearance:none;border:0;background:#3b82f6;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .muted{color:#a8b3cf;margin-top:10px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Log in</h2>
+    <label>Email</label>
+    <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+    <label>Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+    <button class="btn" id="loginBtn">Log in</button>
+    <div id="msg" class="muted">Existing accounts only. No sign-up on web.</div>
+  </div>
+
 <script>
-  const TITLE_ID = "1A7FA4"; // your title id
-  PlayFab.settings.titleId = TITLE_ID;
+  const TITLE_ID = "1A7FA4";
+  function nextUrl(){ const p=new URLSearchParams(location.search); return p.get("next") || "/"; }
+  function setMsg(s){ document.getElementById("msg").textContent=s; }
 
-  function getLocal(k){ try { return localStorage.getItem(k) || ""; } catch { return ""; } }
-  function setLocal(k,v){ try { localStorage.setItem(k,v); } catch {} }
+  async function login(){
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    if(!email || !password){ setMsg("Enter email and password."); return; }
+    document.getElementById("loginBtn").disabled = true; setMsg("Logging in…");
 
-  function ensureCustomId() {
-    let id = getLocal("ih_custom_id");
-    if (!id) {
-      id = (crypto && crypto.randomUUID) ? crypto.randomUUID()
-                                         : ("ih_" + Math.random().toString(36).slice(2));
-      setLocal("ih_custom_id", id);
-    }
-    return id;
-  }
-
-  let logging = false;
-
-  async function login() {
-    if (logging) return;             // debounce to avoid 429
-    logging = true;
-    const btn = document.getElementById("loginBtn");
-    if (btn) btn.disabled = true;
-
-    const customId = ensureCustomId();
-    const body = {
-      TitleId: TITLE_ID,
-      CustomId: customId,
-      CreateAccount: true,
-      InfoRequestParameters: { GetUserAccountInfo: true },
-    };
-
-    let retryDelay = 0;
-
-    try {
-      while (true) {
-        const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/LoginWithCustomID`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          mode: "cors",
-          body: JSON.stringify(body),
-        });
-
-        const data = await res.json();
-        console.log("[IH] Login response:", data);
-
-        if (res.ok && data.code === 200) {
-          const id = data?.data?.PlayFabId;
-          if (!id) throw new Error("No PlayFabId in response");
-          window.currentPlayFabId = id;
-          setLocal("ih_playfab_id", id);
-          document.getElementById("status").textContent = `Logged in as ${id}`;
-          document.getElementById("loggedState").textContent = "logged in";
-          break;
-        }
-
-        // Handle common errors
-        if (data?.error === "APIClientRequestRateLimitExceeded" || data?.status === "TooManyRequests") {
-          // Respect server hint or backoff
-          const hint = Number(data?.retryAfterSeconds) || 3;
-          retryDelay = Math.max(retryDelay * 2, hint); // exponential-ish
-          document.getElementById("status").textContent = `Throttled. Retrying in ${retryDelay}s…`;
-          await new Promise(r => setTimeout(r, retryDelay * 1000));
-          continue;
-        }
-
-        if (data?.error === "PlayerCreationDisabled" || data?.errorCode === 22000) {
-          document.getElementById("status").textContent =
-            "Player creation is disabled for this title. Enable it in PlayFab → Settings → API Features → Player Creation.";
-          document.getElementById("loggedState").textContent = "logged out";
-          break;
-        }
-
-        // Other errors
-        document.getElementById("status").textContent =
-          `Login failed: ${data?.errorMessage || data?.error || "See console"}`;
-        document.getElementById("loggedState").textContent = "logged out";
-        break;
+    try{
+      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/LoginWithEmailAddress`, {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ TitleId: TITLE_ID, Email: email, Password: password })
+      });
+      const data = await res.json();
+      if(res.ok && data?.code===200){
+        const ticket = data.data.SessionTicket;
+        const pid = data.data.PlayFabId || data?.data?.InfoResultPayload?.AccountInfo?.PlayFabId || "";
+        if(!pid){ throw new Error("Missing PlayFabId"); }
+        localStorage.setItem("ih_session", ticket);
+        localStorage.setItem("ih_playfab_id", pid);
+        setMsg("Logged in. Redirecting…");
+        location.replace(nextUrl());
+      }else{
+        setMsg(data?.errorMessage || data?.error || "Login failed.");
       }
-    } catch (err) {
-      console.error("[IH] Login failed:", err);
-      document.getElementById("status").textContent = "Login failed (see console).";
-      document.getElementById("loggedState").textContent = "logged out";
-    } finally {
-      if (btn) btn.disabled = false;
-      logging = false;
-    }
+    }catch(e){ console.error(e); setMsg("Login failed (see console)."); }
+    finally{ document.getElementById("loginBtn").disabled = false; }
   }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("loginBtn");
-    if (btn) btn.addEventListener("click", login);
-
-    const saved = getLocal("ih_playfab_id");
-    if (saved) {
-      window.currentPlayFabId = saved;
-      document.getElementById("status").textContent = `Logged in as ${saved}`;
-      document.getElementById("loggedState").textContent = "logged in";
-    }
-  });
+  document.getElementById("loginBtn").addEventListener("click", login);
 </script>
+</body>
+</html>

@@ -2,61 +2,139 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Log in — Iron Haul</title>
+  <title>Log in • IRON HAUL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body{margin:0;background:#0b0e13;color:#e7eefc;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;
-         display:flex;min-height:100vh;align-items:center;justify-content:center}
-    .card{width:100%;max-width:460px;background:#121826;border-radius:16px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
-    label{display:block;font-size:12px;color:#a8b3cf;margin:6px 2px}
-    input{width:100%;background:#0f1422;border:1px solid #1b2437;color:#e7eefc;border-radius:8px;padding:10px 12px}
-    .btn{width:100%;margin-top:12px;appearance:none;border:0;background:#3b82f6;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-    .muted{color:#a8b3cf;margin-top:10px}
+    :root {
+      --bg: #0b1220; --panel:#0f1a2b; --ink:#d7e1ff; --muted:#8ba0c6;
+      --btn:#2f78ff; --btn-alt:#1e2a42; --ok:#5dd39e; --bad:#ff6b6b;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      min-height:100vh; display:grid; place-items:center;
+    }
+    .card{
+      width:min(480px,92vw); background:var(--panel); color:var(--ink);
+      border-radius:14px; padding:24px 22px; box-shadow:0 18px 30px rgba(0,0,0,.45)
+    }
+    h1{margin:0 0 14px; font-size:20px}
+    .muted{color:var(--muted)}
+    label{display:block; font-size:13px; color:var(--muted); margin:10px 0 6px}
+    input{
+      width:100%; height:40px; border-radius:10px; border:1px solid #1b2a44;
+      padding:0 12px; color:var(--ink); background:#0e1a2f; outline:none
+    }
+    input:focus{border-color:#2a5bff}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      height:40px; padding:0 14px; border-radius:10px; border:0; cursor:pointer;
+      background:var(--btn); color:#fff; font-weight:600; text-decoration:none
+    }
+    .btn.alt{background:var(--btn-alt); color:var(--ink)}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+    .hr{height:1px; background:#162238; opacity:.7; margin:16px 0}
+    .status{margin-top:10px; font-size:14px}
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>Log in</h2>
-    <label>Email</label>
-    <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
-    <label>Password</label>
-    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-    <button class="btn" id="loginBtn">Log in</button>
-    <div id="msg" class="muted">Existing accounts only. No sign-up on web.</div>
+    <h1>Log in to IRON HAUL</h1>
+    <p class="muted" style="margin-top:0">
+      Log in with your <b>Custom ID</b> (the same ID your game uses). Website login will not create accounts.
+    </p>
+
+    <!-- CUSTOM ID FORM (default) -->
+    <label for="customId">Custom ID</label>
+    <input id="customId" placeholder="Enter your PlayFab CustomID" autocomplete="off" />
+
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="loginBtn">Log in</button>
+      <a class="btn alt" href="index.html">Cancel</a>
+    </div>
+
+    <div class="status muted" id="status">—</div>
+
+    <div class="hr"></div>
+    <p class="muted" style="margin:0">
+      After login, you'll return to the console to view your balance.
+    </p>
   </div>
 
-<script>
-  const TITLE_ID = "1A7FA4";
-  function nextUrl(){ const p=new URLSearchParams(location.search); return p.get("next") || "/"; }
-  function setMsg(s){ document.getElementById("msg").textContent=s; }
+  <script>
+    /******** CONFIG ********/
+    const TITLE_ID = "1A7FA4"; // change if different
 
-  async function login(){
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    if(!email || !password){ setMsg("Enter email and password."); return; }
-    document.getElementById("loginBtn").disabled = true; setMsg("Logging in…");
-
-    try{
-      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/LoginWithEmailAddress`, {
-        method:"POST", headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ TitleId: TITLE_ID, Email: email, Password: password })
+    /******** HELPERS ********/
+    const $ = (s)=>document.querySelector(s);
+    function status(msg, tone){
+      const el = $("#status"); el.textContent = msg;
+      el.style.color = tone==="ok" ? "var(--ok)" : tone==="bad" ? "var(--bad)" : "var(--muted)";
+    }
+    function nextUrl(){
+      const u = new URL(location.href);
+      const n = u.searchParams.get("next");
+      // prevent external redirects
+      if (n && /^\/[^?#]*/.test(n)) return n;
+      return "/ironhaul-balance/"; // your repo root (works on GitHub Pages)
+    }
+    async function pf(path, body){
+      const res = await fetch(`https://${TITLE_ID}.playfabapi.com/Client/${path}`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(body||{})
       });
-      const data = await res.json();
-      if(res.ok && data?.code===200){
-        const ticket = data.data.SessionTicket;
-        const pid = data.data.PlayFabId || data?.data?.InfoResultPayload?.AccountInfo?.PlayFabId || "";
-        if(!pid){ throw new Error("Missing PlayFabId"); }
-        localStorage.setItem("ih_session", ticket);
-        localStorage.setItem("ih_playfab_id", pid);
-        setMsg("Logged in. Redirecting…");
-        location.replace(nextUrl());
-      }else{
-        setMsg(data?.errorMessage || data?.error || "Login failed.");
+      const json = await res.json().catch(()=>({}));
+      if(!res.ok || json.error){
+        const code=json?.errorCode||res.status, name=json?.error||res.statusText, msg=json?.errorMessage||"Request failed";
+        const err=new Error(`${name} (${code}): ${msg}`); err.data=json; throw err;
       }
-    }catch(e){ console.error(e); setMsg("Login failed (see console)."); }
-    finally{ document.getElementById("loginBtn").disabled = false; }
-  }
-  document.getElementById("loginBtn").addEventListener("click", login);
-</script>
+      return json;
+    }
+
+    /******** LOGIN ********/
+    $("#loginBtn").addEventListener("click", doLogin);
+    $("#customId").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+
+    async function doLogin(){
+      const id = $("#customId").value.trim();
+      if (!id){ status("Enter your Custom ID.", "bad"); return; }
+
+      $("#loginBtn").disabled = true;
+      status("Signing in…");
+
+      try{
+        // No account creation on website:
+        const json = await pf("LoginWithCustomID", {
+          TitleId: TITLE_ID,
+          CustomId: id,
+          CreateAccount: false
+        });
+        const session = json?.data?.SessionTicket;
+        const pid = json?.data?.PlayFabId;
+        if (!session || !pid) throw new Error("Invalid login response.");
+
+        localStorage.setItem("ih_session", session);
+        localStorage.setItem("ih_playfab_id", pid);
+
+        status("Logged in. Redirecting…", "ok");
+        setTimeout(()=>location.replace(nextUrl()), 400);
+      }catch(e){
+        const data=e?.data||{};
+        const name=data?.error||e.name, code=data?.errorCode||"", msg=data?.errorMessage||e.message;
+        if (code===22000 || name==="AccountNotFound" || name==="InvalidParams"){
+          status("Account not found for this Custom ID. Use your in-game ID.", "bad");
+        } else if (code===1199 || data?.status==="TooManyRequests"){
+          status("Throttled by PlayFab. Try again in a few seconds.", "bad");
+        } else {
+          status(`${name}: ${msg}`, "bad");
+        }
+      }finally{
+        $("#loginBtn").disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
